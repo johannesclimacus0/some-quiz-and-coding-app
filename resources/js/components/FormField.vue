@@ -23,7 +23,10 @@ const updateValue = (event: Event): void => {
 
 <template>
     <div class="space-y-2">
-        <label class="block font-mono text-xs font-medium text-[#68616f] dark:text-[#918da0]" :for="id">
+        <label
+            class="block font-mono text-xs font-medium text-[#68616f] dark:text-[#918da0]"
+            :for="id"
+        >
             {{ label }}
         </label>
         <input
@@ -34,8 +37,11 @@ const updateValue = (event: Event): void => {
             :name="id"
             :value="modelValue"
             v-bind="$attrs"
+        />
+        <p
+            v-if="error"
+            class="flex items-start gap-2 font-mono text-xs font-medium leading-5 text-[#68616f] dark:text-[#918da0]"
         >
-        <p v-if="error" class="flex items-start gap-2 font-mono text-xs font-medium leading-5 text-[#68616f] dark:text-[#918da0]">
             <span class="shrink-0 text-[#c14378] dark:text-[#f077a8]">!</span>
             <span>{{ error }}</span>
         </p>

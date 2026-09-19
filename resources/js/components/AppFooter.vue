@@ -28,9 +28,16 @@ const logout = async (): Promise<void> => {
 </script>
 
 <template>
-    <footer class="border-t border-[#c9c1cf] bg-[#eeeaf2] px-4 py-1.5 dark:border-[#343746] dark:bg-[#1d2029] sm:px-6">
-        <div class="mx-auto flex w-full max-w-[90rem] flex-wrap items-center justify-between gap-4 font-mono text-xs font-medium text-[#777080] dark:text-[#85899a]">
-            <div v-if="authStore.user" class="min-w-0">
+    <footer
+        class="border-t border-[#c9c1cf] bg-[#eeeaf2] px-4 py-1.5 dark:border-[#343746] dark:bg-[#1d2029] sm:px-6"
+    >
+        <div
+            class="mx-auto flex w-full max-w-[90rem] flex-wrap items-center justify-between gap-4 font-mono text-xs font-medium text-[#777080] dark:text-[#85899a]"
+        >
+            <div
+                v-if="authStore.user"
+                class="min-w-0"
+            >
                 <p class="truncate text-[#342d3a] dark:text-[#ece8f1]">{{ authStore.user.name }}</p>
                 <p class="truncate">{{ authStore.user.email }}</p>
             </div>
@@ -48,7 +55,10 @@ const logout = async (): Promise<void> => {
                 </BaseButton>
             </div>
         </div>
-
-        <AlertMessage v-if="logoutError" :message="logoutError" class="mx-auto mt-2 max-w-[90rem]" />
+        <AlertMessage
+            v-if="logoutError"
+            :message="logoutError"
+            class="mx-auto mt-2 max-w-[90rem]"
+        />
     </footer>
 </template>

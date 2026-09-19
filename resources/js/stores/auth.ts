@@ -1,25 +1,17 @@
 import axios from 'axios'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import {
-    getCurrentUser,
-    login as loginRequest,
-    logout as logoutRequest,
-    register as registerRequest,
-    type LoginData,
-    type RegisterData,
-    type User,
-} from '../api/auth'
+import { authApi, type LoginData, type RegisterData, type User } from '../api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref<User|null>(null)
+    const user = ref<User | null>(null)
     const initialized = ref(false)
     const isAuthenticated = computed(() => user.value !== null)
     const isAdmin = computed(() => user.value?.role === 'admin')
 
-    const fetchUser = async (): Promise<User|null> => {
+    const fetchUser = async (): Promise<User | null> => {
         try {
-            user.value = await getCurrentUser()
+            user.value = await authApi.getCurrentUser()
 
             return user.value
         } catch (error: unknown) {
@@ -44,19 +36,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     const register = async (data: RegisterData): Promise<User> => {
-        await registerRequest(data)
+        await authApi.register(data)
 
         return requireAuthenticatedUser()
     }
 
     const login = async (data: LoginData): Promise<User> => {
-        await loginRequest(data)
+        await authApi.login(data)
 
         return requireAuthenticatedUser()
     }
 
     const logout = async (): Promise<void> => {
-        await logoutRequest()
+        await authApi.logout()
         user.value = null
         initialized.value = true
     }

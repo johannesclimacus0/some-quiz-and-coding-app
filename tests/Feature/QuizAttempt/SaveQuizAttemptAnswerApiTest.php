@@ -1,0 +1,83 @@
+<?php
+
+namespace Tests\Feature\QuizAttempt;
+
+use App\Models\Answer;
+use App\Models\Group;
+use App\Models\Question;
+use App\Models\Quiz;
+use App\Models\QuizAttempt;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+class SaveQuizAttemptAnswerApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_answer_is_created_updated_and_restored(): void
+    {
+        [$user, $quiz] = $this->assignedReadyQuiz();
+        $base = '/api/quizzes/' . $quiz->uuid . '/attempt';
+        $attempt = $this->actingAs($user)->postJson($base)->assertCreated()->json('data');
+        $question = $attempt['snapshot']['questions'][0];
+        $url = $base . '/answers/' . $question['uuid'];
+
+        $this->putJson($url, ['answer_uuid' => $question['answers'][0]['uuid']])
+            ->assertOk()->assertJsonPath('data.selected_answers.' . $question['uuid'], $question['answers'][0]['uuid']);
+        $this->putJson($url, ['answer_uuid' => $question['answers'][1]['uuid']])
+            ->assertOk()->assertJsonPath('data.selected_answers.' . $question['uuid'], $question['answers'][1]['uuid']);
+        $this->getJson($base)
+            ->assertOk()->assertJsonPath('data.selected_answers.' . $question['uuid'], $question['answers'][1]['uuid']);
+        $this->assertDatabaseCount('quiz_attempt_answers', 1);
+    }
+
+    public function test_question_and_answer_must_belong_to_the_snapshot(): void
+    {
+        [$user, $quiz] = $this->assignedReadyQuiz();
+        $base = '/api/quizzes/' . $quiz->uuid . '/attempt';
+        $attempt = $this->actingAs($user)->postJson($base)->json('data');
+        $question = $attempt['snapshot']['questions'][0];
+
+        $this->putJson($base . '/answers/' . Str::uuid(), ['answer_uuid' => $question['answers'][0]['uuid']])
+            ->assertUnprocessable();
+        $this->putJson($base . '/answers/' . $question['uuid'], ['answer_uuid' => (string) Str::uuid()])
+            ->assertUnprocessable()->assertJsonValidationErrors('answer_uuid');
+    }
+
+    public function test_completed_expired_and_revoked_attempts_reject_changes(): void
+    {
+        [$user, $quiz, $group] = $this->assignedReadyQuiz();
+        $base = '/api/quizzes/' . $quiz->uuid . '/attempt';
+        $attemptData = $this->actingAs($user)->postJson($base)->json('data');
+        $question = $attemptData['snapshot']['questions'][0];
+        $url = $base . '/answers/' . $question['uuid'];
+        $payload = ['answer_uuid' => $question['answers'][0]['uuid']];
+
+        QuizAttempt::query()->where('uuid', $attemptData['uuid'])->update(['submitted_at' => now(), 'correct_answers' => 0]);
+        $this->putJson($url, $payload)->assertConflict();
+
+        QuizAttempt::query()->where('uuid', $attemptData['uuid'])->update(['submitted_at' => null, 'correct_answers' => null]);
+        $quiz->update(['due_at' => now()->subMinute()]);
+        $this->putJson($url, $payload)->assertConflict();
+
+        $quiz->update(['due_at' => null]);
+        $group->users()->detach($user);
+        $this->putJson($url, $payload)->assertForbidden();
+    }
+
+    private function assignedReadyQuiz(): array
+    {
+        $user = User::factory()->create();
+        $quiz = Quiz::factory()->create(['due_at' => null]);
+        $group = Group::factory()->create();
+        $group->users()->attach($user);
+        $group->quizzes()->attach($quiz);
+        $question = Question::factory()->for($quiz)->create();
+        Answer::factory()->correct()->for($question)->create(['position' => 0]);
+        Answer::factory()->for($question)->create(['position' => 1]);
+
+        return [$user, $quiz, $group];
+    }
+}

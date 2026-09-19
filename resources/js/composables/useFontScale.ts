@@ -19,7 +19,12 @@ export const initializeFontScale = (): void => {
     try {
         const savedScale = Number(localStorage.getItem(storageKey))
 
-        if (Number.isInteger(savedScale) && savedScale >= minimum && savedScale <= maximum && savedScale % step === 0) {
+        if (
+            Number.isInteger(savedScale) &&
+            savedScale >= minimum &&
+            savedScale <= maximum &&
+            savedScale % step === 0
+        ) {
             scale.value = savedScale
         }
     } catch {

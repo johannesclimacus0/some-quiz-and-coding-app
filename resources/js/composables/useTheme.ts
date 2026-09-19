@@ -1,4 +1,4 @@
-import { computed, readonly, ref } from 'vue'
+import { readonly, ref } from 'vue'
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 
@@ -13,8 +13,9 @@ const isThemePreference = (value: string | null): value is ThemePreference => {
 }
 
 const applyTheme = (): void => {
-    const dark = preference.value === 'dark'
-        || (preference.value === 'system' && mediaQuery?.matches === true)
+    const dark =
+        preference.value === 'dark' ||
+        (preference.value === 'system' && mediaQuery?.matches === true)
 
     document.documentElement.classList.toggle('dark', dark)
     document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
@@ -46,28 +47,14 @@ export const initializeTheme = (): void => {
 }
 
 export const useTheme = () => {
-    const label = computed(() => ({
-        system: 'системная',
-        light: 'светлая',
-        dark: 'тёмная',
-    })[preference.value])
-
     const setTheme = (theme: ThemePreference): void => {
         preference.value = theme
         savePreference()
         applyTheme()
     }
 
-    const cycleTheme = (): void => {
-        const currentIndex = preferences.indexOf(preference.value)
-
-        setTheme(preferences[(currentIndex + 1) % preferences.length])
-    }
-
     return {
         preference: readonly(preference),
-        label,
         setTheme,
-        cycleTheme,
     }
 }

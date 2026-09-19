@@ -13,7 +13,7 @@ class AuthorizationTest extends TestCase
 
     public function test_a_guest_cannot_access_admin_routes(): void
     {
-        $this->getJson('/api/admin/overview')
+        $this->getJson('/api/admin/groups')
             ->assertUnauthorized();
     }
 
@@ -22,7 +22,7 @@ class AuthorizationTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->getJson('/api/admin/overview')
+            ->getJson('/api/admin/groups')
             ->assertForbidden();
     }
 
@@ -31,9 +31,8 @@ class AuthorizationTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
-            ->getJson('/api/admin/overview')
-            ->assertOk()
-            ->assertJsonPath('status', 'ok');
+            ->getJson('/api/admin/groups')
+            ->assertOk();
     }
 
     public function test_the_current_user_response_contains_the_role(): void

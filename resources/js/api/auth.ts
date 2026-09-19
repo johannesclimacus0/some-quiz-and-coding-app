@@ -13,39 +13,33 @@ export interface LoginData {
     remember: boolean
 }
 
-export interface LoginResult {
-    two_factor: boolean
-}
-
 export interface User {
     id: number
     uuid: string
     name: string
     email: string
-    email_verified_at: string|null
-    role: 'user'|'admin'
+    email_verified_at: string | null
+    role: 'user' | 'admin'
 }
 
-export const csrf = async (): Promise<void> => {
-    await http.get('/sanctum/csrf-cookie')
-}
+export const authApi = {
+    async csrf(): Promise<void> {
+        await http.get('/sanctum/csrf-cookie')
+    },
+    async register(data: RegisterData): Promise<void> {
+        await authApi.csrf()
 
-export async function register(data: RegisterData): Promise<void> {
-    await csrf()
+        await http.post('/register', data)
+    },
+    async login(data: LoginData): Promise<void> {
+        await authApi.csrf()
 
-    await http.post('/register', data)
-}
-
-export async function login(data: LoginData): Promise<LoginResult> {
-    await csrf()
-
-    return (await http.post<LoginResult>('/login', data)).data
-}
-
-export async function logout(): Promise<void> {
-    await http.post('/logout')
-}
-
-export async function getCurrentUser(): Promise<User> {
-    return (await http.get<User>('/api/user')).data
+        await http.post('/login', data)
+    },
+    async logout(): Promise<void> {
+        await http.post('/logout')
+    },
+    async getCurrentUser(): Promise<User> {
+        return (await http.get<User>('/api/user')).data
+    },
 }

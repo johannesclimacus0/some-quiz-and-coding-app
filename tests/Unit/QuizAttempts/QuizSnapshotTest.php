@@ -1,0 +1,34 @@
+<?php
+
+namespace Tests\Unit\QuizAttempts;
+
+use App\Models\Answer;
+use App\Models\Question;
+use App\Models\Quiz;
+use App\Services\QuizAttempts\QuizSnapshot;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class QuizSnapshotTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_it_builds_an_ordered_internal_snapshot(): void
+    {
+        $quiz = Quiz::factory()->create(['title' => 'Linux']);
+        $second = Question::factory()->for($quiz)->create(['text' => 'Second?', 'position' => 2]);
+        $first = Question::factory()->for($quiz)->create(['text' => 'First?', 'position' => 1]);
+        Answer::factory()->for($first)->create(['text' => 'Wrong', 'position' => 2]);
+        $correct = Answer::factory()->correct()->for($first)->create(['text' => 'Correct', 'position' => 1]);
+        Answer::factory()->for($second)->create(['position' => 0]);
+        Answer::factory()->correct()->for($second)->create(['position' => 1]);
+
+        $snapshot = app(QuizSnapshot::class)->make($quiz);
+
+        $this->assertSame('Linux', $snapshot['quiz']['title']);
+        $this->assertSame(['First?', 'Second?'], array_column($snapshot['questions'], 'text'));
+        $this->assertSame($correct->uuid, $snapshot['questions'][0]['correct_answer_uuid']);
+        $this->assertSame(['Correct', 'Wrong'], array_column($snapshot['questions'][0]['answers'], 'text'));
+        $this->assertArrayNotHasKey('is_correct', $snapshot['questions'][0]['answers'][0]);
+    }
+}
