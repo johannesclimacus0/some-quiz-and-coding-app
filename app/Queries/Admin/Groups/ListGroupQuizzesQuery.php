@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Actions\Admin\Groups;
+namespace App\Queries\Admin\Groups;
 
 use App\Models\Group;
 use App\Models\Quiz;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
-final class ListGroupQuizzesAction
+final class ListGroupQuizzesQuery
 {
-    public function handle(Group $group, string $search): LengthAwarePaginator
+    public function paginate(Group $group, string $search): LengthAwarePaginator
     {
         return Quiz::query()
             ->when($search !== '', fn (Builder $query) => $query->whereLike('title', "%{$search}%"))

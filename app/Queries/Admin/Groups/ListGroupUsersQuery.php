@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Admin\Groups;
+namespace App\Queries\Admin\Groups;
 
 use App\Enums\UserRole;
 use App\Models\Group;
@@ -8,9 +8,9 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
-final class ListGroupUsersAction
+final class ListGroupUsersQuery
 {
-    public function handle(Group $group, string $search): LengthAwarePaginator
+    public function paginate(Group $group, string $search): LengthAwarePaginator
     {
         return User::query()
             ->where('role', UserRole::User)

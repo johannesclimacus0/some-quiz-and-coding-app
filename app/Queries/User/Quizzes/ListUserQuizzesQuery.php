@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\User\Quizzes;
+namespace App\Queries\User\Quizzes;
 
 use App\Models\Quiz;
 use App\Models\User;
@@ -8,9 +8,9 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-final class ListUserQuizzesAction
+final class ListUserQuizzesQuery
 {
-    public function handle(User $user): LengthAwarePaginator
+    public function paginate(User $user): LengthAwarePaginator
     {
         $userId = $user->getKey();
 
