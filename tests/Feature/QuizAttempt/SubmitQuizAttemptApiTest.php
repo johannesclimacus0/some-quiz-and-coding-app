@@ -34,8 +34,8 @@ class SubmitQuizAttemptApiTest extends TestCase
         $firstCorrect = $first['answers'][0]['uuid'];
         $secondWrong = $second['answers'][1]['uuid'];
 
-        $this->putJson($base . '/answers/' . $first['uuid'], ['answer_uuid' => $firstCorrect])->assertOk();
-        $this->putJson($base . '/answers/' . $second['uuid'], ['answer_uuid' => $secondWrong])->assertOk();
+        $this->putJson($base . '/answers/' . $first['uuid'], ['response' => ['answer_uuid' => $firstCorrect]])->assertOk();
+        $this->putJson($base . '/answers/' . $second['uuid'], ['response' => ['answer_uuid' => $secondWrong]])->assertOk();
 
         Answer::query()->where('uuid', $firstCorrect)->update(['is_correct' => false]);
         Answer::query()->where('uuid', $first['answers'][1]['uuid'])->update(['is_correct' => true]);
@@ -46,6 +46,7 @@ class SubmitQuizAttemptApiTest extends TestCase
             ->assertJsonPath('data.total_questions', 2)
             ->assertJsonPath('data.percentage', 50);
         $this->assertStringNotContainsString('correct_answer_uuid', $response->getContent());
+        $this->assertStringNotContainsString('grading_config', $response->getContent());
         $this->postJson($base . '/submit')->assertConflict();
         $this->getJson('/api/quizzes')->assertOk()
             ->assertJsonPath('data.0.attempt_status', 'completed')

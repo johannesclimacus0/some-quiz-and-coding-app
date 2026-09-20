@@ -58,7 +58,7 @@ function number(page: number): string {
             :disabled="loading || currentPage === 1"
             @click="change(currentPage - 1)"
         >
-            <-- назад
+            &lt;-- назад
         </button>
         <span class="text-[#bdb6c4] dark:text-[#4d5060]">|</span>
         <template

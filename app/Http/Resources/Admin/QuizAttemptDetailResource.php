@@ -9,7 +9,7 @@ class QuizAttemptDetailResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $selected = $this->answers->pluck('answer_uuid', 'question_uuid');
+        $selected = $this->answers->pluck('response.answer_uuid', 'question_uuid');
 
         return [
             ...new QuizAttemptSummaryResource($this->resource)->toArray($request),
@@ -22,12 +22,12 @@ class QuizAttemptDetailResource extends JsonResource
                     'position' => $question['position'],
                     'state' => $selectedUuid === null
                         ? 'empty'
-                        : ($selectedUuid === $question['correct_answer_uuid'] ? 'correct' : 'incorrect'),
-                    'answers' => collect($question['answers'])->map(fn (array $answer): array => [
+                        : ($selectedUuid === $question['grading_config']['correct_answer_uuid'] ? 'correct' : 'incorrect'),
+                    'answers' => collect($question['public_config']['answers'])->map(fn (array $answer): array => [
                         'uuid' => $answer['uuid'],
                         'text' => $answer['text'],
                         'position' => $answer['position'],
-                        'is_correct' => $answer['uuid'] === $question['correct_answer_uuid'],
+                        'is_correct' => $answer['uuid'] === $question['grading_config']['correct_answer_uuid'],
                         'is_selected' => $answer['uuid'] === $selectedUuid,
                     ])->values()->all(),
                 ];

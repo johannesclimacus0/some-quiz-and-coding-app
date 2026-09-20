@@ -36,9 +36,9 @@ final class SubmitQuizAttemptAction
                 throw new AttemptIncomplete;
             }
 
-            $selected = $attempt->answers->pluck('answer_uuid', 'question_uuid');
+            $selected = $attempt->answers->pluck('response.answer_uuid', 'question_uuid');
             $correct = collect($attempt->snapshot['questions'])->filter(
-                fn (array $question): bool => $selected->get($question['uuid']) === $question['correct_answer_uuid']
+                fn (array $question): bool => $selected->get($question['uuid']) === $question['grading_config']['correct_answer_uuid']
             )->count();
 
             $attempt->update([

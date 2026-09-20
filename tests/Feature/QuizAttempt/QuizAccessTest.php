@@ -58,7 +58,7 @@ class QuizAccessTest extends TestCase
             $attempt->user,
             $staleQuiz,
             (string) str()->uuid(),
-            (string) str()->uuid(),
+            ['answer_uuid' => (string) str()->uuid()],
         );
     }
 

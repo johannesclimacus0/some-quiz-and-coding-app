@@ -36,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             [$status, $errors] = match ($exception::class) {
                 QuizDeadlineExpired::class, QuizNotReady::class, AttemptAlreadySubmitted::class => [409, null],
                 QuestionNotInAttempt::class => [422, ['question' => [$exception->getMessage()]]],
-                AnswerNotInQuestion::class => [422, ['answer_uuid' => [$exception->getMessage()]]],
+                AnswerNotInQuestion::class => [422, ['response.answer_uuid' => [$exception->getMessage()]]],
                 AttemptIncomplete::class => [422, ['answers' => [$exception->getMessage()]]],
             };
 

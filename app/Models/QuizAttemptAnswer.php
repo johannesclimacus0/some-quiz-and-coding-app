@@ -13,29 +13,31 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $quiz_attempt_id
  * @property string $question_uuid
- * @property string $answer_uuid
+ * @property array<array-key, mixed> $response
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read QuizAttempt $attempt
- *
+ * @property-read \App\Models\QuizAttempt $attempt
  * @method static \Database\Factories\QuizAttemptAnswerFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereAnswerUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereQuestionUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereQuizAttemptId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereResponse($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereUpdatedAt($value)
- *
  * @mixin \Eloquent
  */
-#[Fillable(['quiz_attempt_id', 'question_uuid', 'answer_uuid'])]
+#[Fillable(['quiz_attempt_id', 'question_uuid', 'response'])]
 class QuizAttemptAnswer extends Model
 {
     /** @use HasFactory<QuizAttemptAnswerFactory> */
     use HasFactory;
+
+    protected $casts = [
+        'response' => 'array',
+    ];
 
     public function attempt(): BelongsTo
     {

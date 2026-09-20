@@ -24,13 +24,12 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $deleted_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Collection<int, QuizAttempt> $attempts
+ * @property-read Collection<int, \App\Models\QuizAttempt> $attempts
  * @property-read int|null $attempts_count
- * @property-read Collection<int, Group> $groups
+ * @property-read Collection<int, \App\Models\Group> $groups
  * @property-read int|null $groups_count
- * @property-read Collection<int, Question> $questions
+ * @property-read Collection<int, \App\Models\Question> $questions
  * @property-read int|null $questions_count
- *
  * @method static \Database\Factories\QuizFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newQuery()
@@ -47,7 +46,6 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz withoutTrashed()
- *
  * @mixin \Eloquent
  */
 #[Fillable(['title', 'description', 'due_at'])]

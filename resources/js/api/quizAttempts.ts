@@ -22,6 +22,10 @@ export interface AttemptResult {
     submitted_at: string
 }
 
+export interface SingleChoiceResponse {
+    answer_uuid: string
+}
+
 export interface QuizAttempt {
     uuid: string
     status: AttemptStatus
@@ -29,7 +33,7 @@ export interface QuizAttempt {
         quiz: { uuid: string; title: string; description: string | null }
         questions: AttemptQuestion[]
     }
-    selected_answers: Record<string, string>
+    responses: Record<string, SingleChoiceResponse>
     result: AttemptResult | null
     started_at: string
 }
@@ -55,15 +59,15 @@ export const quizAttemptsApi = {
     async saveAnswer({
         quiz,
         question,
-        answerUuid,
+        response,
     }: {
         quiz: string
         question: string
-        answerUuid: string
+        response: SingleChoiceResponse
     }): Promise<QuizAttempt> {
         return (
             await http.put<{ data: QuizAttempt }>(`${root}/${quiz}/attempt/answers/${question}`, {
-                answer_uuid: answerUuid,
+                response,
             })
         ).data.data
     },

@@ -18,15 +18,18 @@ class SaveQuizAttemptAnswerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'answer_uuid' => 'bail|required|uuid',
+            'response' => 'bail|required|array:answer_uuid',
+            'response.answer_uuid' => 'bail|required|uuid',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'answer_uuid.required' => 'Выберите ответ',
-            'answer_uuid.uuid' => 'Передан некорректный идентификатор ответа',
+            'response.required' => 'Укажите ответ',
+            'response.array' => 'Передана некорректная структура ответа',
+            'response.answer_uuid.required' => 'Выберите ответ',
+            'response.answer_uuid.uuid' => 'Передан некорректный идентификатор ответа',
         ];
     }
 }

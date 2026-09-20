@@ -2,7 +2,12 @@
 import axios from 'axios'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { quizAttemptsApi, type AttemptQuestion, type QuizDetails } from '../api/quizAttempts'
+import {
+    quizAttemptsApi,
+    type AttemptQuestion,
+    type QuizDetails,
+    type SingleChoiceResponse,
+} from '../api/quizAttempts'
 import AlertMessage from '../components/AlertMessage.vue'
 import BaseButton from '../components/BaseButton.vue'
 import { useApiOperation } from '../composables/useApiOperation'
@@ -10,7 +15,7 @@ import UserLayout from '../layouts/UserLayout.vue'
 
 const route = useRoute()
 const details = ref<QuizDetails | null>(null)
-const selected = ref<Record<string, string>>({})
+const responses = ref<Record<string, SingleChoiceResponse>>({})
 const savingQuestion = ref<string | null>(null)
 const saveErrors = ref<Record<string, string>>({})
 const { busy, error, run } = useApiOperation()
@@ -20,7 +25,7 @@ const questions = computed(() => attempt.value?.snapshot.questions ?? [])
 const allAnswered = computed(
     () =>
         questions.value.length > 0 &&
-        questions.value.every((question) => Boolean(selected.value[question.uuid])),
+        questions.value.every((question) => Boolean(responses.value[question.uuid]?.answer_uuid)),
 )
 const deadlineExpired = computed(() =>
     Boolean(details.value?.due_at && new Date(details.value.due_at).getTime() < Date.now()),
@@ -30,7 +35,7 @@ const mutable = computed(() => attempt.value?.status === 'in_progress' && !savin
 async function load(): Promise<void> {
     await run(async () => {
         details.value = await quizAttemptsApi.showQuiz({ quiz: String(route.params.quiz) })
-        selected.value = { ...(details.value.attempt?.selected_answers ?? {}) }
+        responses.value = { ...(details.value.attempt?.responses ?? {}) }
     })
 }
 
@@ -38,14 +43,14 @@ async function start(): Promise<void> {
     if (!details.value) return
     await run(async () => {
         details.value!.attempt = await quizAttemptsApi.start({ quiz: details.value!.uuid })
-        selected.value = { ...details.value!.attempt!.selected_answers }
+        responses.value = { ...details.value!.attempt!.responses }
     })
 }
 
 async function choose(question: AttemptQuestion, answerUuid: string): Promise<void> {
     if (!details.value || !mutable.value) return
-    const previous = selected.value[question.uuid]
-    selected.value = { ...selected.value, [question.uuid]: answerUuid }
+    const previous = responses.value[question.uuid]
+    responses.value = { ...responses.value, [question.uuid]: { answer_uuid: answerUuid } }
     savingQuestion.value = question.uuid
     delete saveErrors.value[question.uuid]
 
@@ -53,15 +58,15 @@ async function choose(question: AttemptQuestion, answerUuid: string): Promise<vo
         const updated = await quizAttemptsApi.saveAnswer({
             quiz: details.value.uuid,
             question: question.uuid,
-            answerUuid,
+            response: { answer_uuid: answerUuid },
         })
         details.value.attempt = updated
-        selected.value = { ...updated.selected_answers }
+        responses.value = { ...updated.responses }
     } catch (cause: unknown) {
-        const next = { ...selected.value }
+        const next = { ...responses.value }
         if (previous) next[question.uuid] = previous
         else delete next[question.uuid]
-        selected.value = next
+        responses.value = next
         saveErrors.value[question.uuid] = axios.isAxiosError<{ message?: string }>(cause)
             ? (cause.response?.data?.message ?? 'Не удалось сохранить ответ.')
             : 'Не удалось сохранить ответ.'
@@ -102,7 +107,7 @@ watch(
                 :to="{ name: 'home' }"
                 class="font-mono text-xs text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
             >
-                <-- список квизов
+                &lt;-- список квизов
             </RouterLink>
         </template>
 
@@ -223,7 +228,7 @@ watch(
                                     {{
                                         savingQuestion === question.uuid
                                             ? 'saving'
-                                            : selected[question.uuid]
+                                            : responses[question.uuid]?.answer_uuid
                                               ? 'saved'
                                               : 'empty'
                                     }}
@@ -238,7 +243,9 @@ watch(
                                     <input
                                         type="radio"
                                         :name="`question-${question.uuid}`"
-                                        :checked="selected[question.uuid] === answer.uuid"
+                                        :checked="
+                                            responses[question.uuid]?.answer_uuid === answer.uuid
+                                        "
                                         class="mt-0.5 size-4 accent-[#557789] dark:accent-[#8ca8b7]"
                                         @change="choose(question, answer.uuid)"
                                     />
@@ -258,7 +265,7 @@ watch(
                         class="flex flex-wrap items-center justify-between gap-3 border border-[#c9c1cf] bg-[#e8e4eb] p-3 dark:border-[#343746] dark:bg-[#181b23]"
                     >
                         <span class="font-mono text-xs text-[#68616f] dark:text-[#918da0]">
-                            answered={{ Object.keys(selected).length }}/{{ questions.length }}
+                            answered={{ Object.keys(responses).length }}/{{ questions.length }}
                         </span>
                         <BaseButton
                             variant="primary"

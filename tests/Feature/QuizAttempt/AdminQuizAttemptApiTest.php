@@ -27,12 +27,18 @@ class AdminQuizAttemptApiTest extends TestCase
                 'quiz' => ['uuid' => $quiz->uuid, 'title' => $quiz->title, 'description' => null],
                 'questions' => [[
                     'uuid' => $questionUuid,
+                    'type' => 'single_choice',
                     'text' => 'Question?',
                     'position' => 0,
-                    'correct_answer_uuid' => $correctUuid,
-                    'answers' => [
-                        ['uuid' => $correctUuid, 'text' => 'Correct', 'position' => 0],
-                        ['uuid' => $wrongUuid, 'text' => 'Wrong', 'position' => 1],
+                    'max_points' => 1,
+                    'grading_config' => [
+                        'correct_answer_uuid' => $correctUuid,
+                    ],
+                    'public_config' => [
+                        'answers' => [
+                            ['uuid' => $correctUuid, 'text' => 'Correct', 'position' => 0],
+                            ['uuid' => $wrongUuid, 'text' => 'Wrong', 'position' => 1],
+                        ],
                     ],
                 ]],
             ],
@@ -42,7 +48,7 @@ class AdminQuizAttemptApiTest extends TestCase
         ]);
         QuizAttemptAnswer::factory()->for($attempt, 'attempt')->create([
             'question_uuid' => $questionUuid,
-            'answer_uuid' => $wrongUuid,
+            'response' => ['answer_uuid' => $wrongUuid],
         ]);
         $base = '/api/admin/quizzes/' . $quiz->uuid . '/attempts';
 

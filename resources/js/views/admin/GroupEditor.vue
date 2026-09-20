@@ -135,7 +135,7 @@ watch(
                     :to="{ name: 'admin.groups' }"
                     class="text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
                 >
-                    <-- список групп
+                    &lt;-- список групп
                 </RouterLink>
                 <span
                     v-if="group"

@@ -20,7 +20,7 @@ class QuizAttemptAnswerController extends Controller
             $request->user(),
             $quiz,
             $questionUuid,
-            $request->validated('answer_uuid')
+            $request->validated('response')
         );
 
         return new QuizAttemptResource($attempt);

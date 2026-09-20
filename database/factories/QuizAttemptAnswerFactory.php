@@ -21,7 +21,7 @@ class QuizAttemptAnswerFactory extends Factory
         return [
             'quiz_attempt_id' => QuizAttempt::factory(),
             'question_uuid' => fake()->uuid(),
-            'answer_uuid' => fake()->uuid(),
+            'response' => ['answer_uuid' => fake()->uuid()],
         ];
     }
 }

@@ -27,10 +27,16 @@ final class QuizSnapshot implements QuizSnapshotFactory
             }
             $questions[] = [
                 'uuid' => $question->uuid,
+                'type' => $question->type->value,
                 'text' => $question->text,
                 'position' => $question->position,
-                'correct_answer_uuid' => $correctAnswerUuid,
-                'answers' => $answers,
+                'max_points' => $question->max_points,
+                'public_config' => [
+                    'answers' => $answers,
+                ],
+                'grading_config' => [
+                    'correct_answer_uuid' => $correctAnswerUuid,
+                ],
             ];
         }
 

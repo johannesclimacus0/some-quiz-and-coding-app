@@ -17,7 +17,7 @@ class QuizSnapshotTest extends TestCase
     {
         $quiz = Quiz::factory()->create(['title' => 'Linux']);
         $second = Question::factory()->for($quiz)->create(['text' => 'Second?', 'position' => 2]);
-        $first = Question::factory()->for($quiz)->create(['text' => 'First?', 'position' => 1]);
+        $first = Question::factory()->for($quiz)->create(['text' => 'First?', 'position' => 1, 'max_points' => 3]);
         Answer::factory()->for($first)->create(['text' => 'Wrong', 'position' => 2]);
         $correct = Answer::factory()->correct()->for($first)->create(['text' => 'Correct', 'position' => 1]);
         Answer::factory()->for($second)->create(['position' => 0]);
@@ -27,8 +27,10 @@ class QuizSnapshotTest extends TestCase
 
         $this->assertSame('Linux', $snapshot['quiz']['title']);
         $this->assertSame(['First?', 'Second?'], array_column($snapshot['questions'], 'text'));
-        $this->assertSame($correct->uuid, $snapshot['questions'][0]['correct_answer_uuid']);
-        $this->assertSame(['Correct', 'Wrong'], array_column($snapshot['questions'][0]['answers'], 'text'));
-        $this->assertArrayNotHasKey('is_correct', $snapshot['questions'][0]['answers'][0]);
+        $this->assertSame($correct->uuid, $snapshot['questions'][0]['grading_config']['correct_answer_uuid']);
+        $this->assertSame(['single_choice', 'single_choice'], array_column($snapshot['questions'], 'type'));
+        $this->assertSame([3, 1], array_column($snapshot['questions'], 'max_points'));
+        $this->assertSame(['Correct', 'Wrong'], array_column($snapshot['questions'][0]['public_config']['answers'], 'text'));
+        $this->assertArrayNotHasKey('is_correct', $snapshot['questions'][0]['public_config']['answers'][0]);
     }
 }

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('quiz_attempt_id')->constrained()->cascadeOnDelete();
             $table->uuid('question_uuid');
-            $table->uuid('answer_uuid');
+            $table->json('response');
             $table->timestamps();
 
             $table->unique(['quiz_attempt_id', 'question_uuid']);

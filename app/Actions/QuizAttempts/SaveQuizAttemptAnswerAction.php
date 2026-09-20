@@ -15,9 +15,9 @@ final class SaveQuizAttemptAnswerAction
 {
     public function __construct(private readonly QuizDeadline $deadline) {}
 
-    public function handle(User $user, Quiz $quiz, string $questionUuid, string $answerUuid): QuizAttempt
+    public function handle(User $user, Quiz $quiz, string $questionUuid, array $response): QuizAttempt
     {
-        return DB::transaction(function () use ($user, $quiz, $questionUuid, $answerUuid): QuizAttempt {
+        return DB::transaction(function () use ($user, $quiz, $questionUuid, $response): QuizAttempt {
             $lockedQuiz = Quiz::query()->lockForUpdate()->findOrFail($quiz->getKey());
             $this->deadline->ensureOpen($lockedQuiz);
 
@@ -37,13 +37,13 @@ final class SaveQuizAttemptAnswerAction
                 throw new QuestionNotInAttempt;
             }
 
-            if (!collect($question['answers'])->contains('uuid', $answerUuid)) {
+            if (!collect($question['public_config']['answers'])->contains('uuid', $response['answer_uuid'])) {
                 throw new AnswerNotInQuestion;
             }
 
             $attempt->answers()->updateOrCreate(
                 ['question_uuid' => $questionUuid],
-                ['answer_uuid' => $answerUuid]
+                ['response' => $response]
             );
 
             return $attempt->load('answers')->setRelation('quiz', $lockedQuiz);

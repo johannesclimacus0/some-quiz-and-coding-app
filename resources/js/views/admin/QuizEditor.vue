@@ -108,7 +108,7 @@ async function removeQuiz() {
                     :to="{ name: 'admin.quizzes' }"
                     class="text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
                 >
-                    <-- список квизов
+                    &lt;-- список квизов
                 </RouterLink>
                 <span
                     v-if="quiz"

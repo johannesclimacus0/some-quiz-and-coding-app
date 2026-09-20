@@ -24,7 +24,7 @@ class QuizAttemptResource extends JsonResource
                             'uuid' => $question['uuid'],
                             'text' => $question['text'],
                             'position' => $question['position'],
-                            'answers' => collect($question['answers'])
+                            'answers' => collect($question['public_config']['answers'])
                                 ->map(fn (array $answer): array => [
                                     'uuid' => $answer['uuid'],
                                     'text' => $answer['text'],
@@ -37,7 +37,7 @@ class QuizAttemptResource extends JsonResource
                     ->values()
                     ->all(),
             ],
-            'selected_answers' => $this->answers->pluck('answer_uuid', 'question_uuid')->all(),
+            'responses' => (object) $this->answers->pluck('response', 'question_uuid')->all(),
             'result' => $this->submitted_at ? [
                 'correct_answers' => $this->correct_answers,
                 'total_questions' => $this->total_questions,
