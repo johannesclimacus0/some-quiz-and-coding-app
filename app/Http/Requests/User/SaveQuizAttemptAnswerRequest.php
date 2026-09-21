@@ -18,8 +18,7 @@ class SaveQuizAttemptAnswerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'response' => 'bail|required|array:answer_uuid',
-            'response.answer_uuid' => 'bail|required|uuid',
+            'response' => 'bail|required|array',
         ];
     }
 
@@ -28,8 +27,6 @@ class SaveQuizAttemptAnswerRequest extends FormRequest
         return [
             'response.required' => 'Укажите ответ',
             'response.array' => 'Передана некорректная структура ответа',
-            'response.answer_uuid.required' => 'Выберите ответ',
-            'response.answer_uuid.uuid' => 'Передан некорректный идентификатор ответа',
         ];
     }
 }

@@ -2,18 +2,22 @@
 
 namespace App\Actions\QuizAttempts;
 
-use App\Exceptions\QuizAttempts\AnswerNotInQuestion;
+use App\Enums\QuestionType;
 use App\Exceptions\QuizAttempts\AttemptAlreadySubmitted;
 use App\Exceptions\QuizAttempts\QuestionNotInAttempt;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\User;
+use App\Services\Questions\QuestionTypeRegistry;
 use App\Services\QuizAttempts\QuizDeadline;
 use Illuminate\Support\Facades\DB;
 
 final class SaveQuizAttemptAnswerAction
 {
-    public function __construct(private readonly QuizDeadline $deadline) {}
+    public function __construct(
+        private readonly QuizDeadline $deadline,
+        private readonly QuestionTypeRegistry $questionTypes,
+    ) {}
 
     public function handle(User $user, Quiz $quiz, string $questionUuid, array $response): QuizAttempt
     {
@@ -37,9 +41,9 @@ final class SaveQuizAttemptAnswerAction
                 throw new QuestionNotInAttempt;
             }
 
-            if (!collect($question['public_config']['answers'])->contains('uuid', $response['answer_uuid'])) {
-                throw new AnswerNotInQuestion;
-            }
+            $this->questionTypes
+                ->for(QuestionType::from($question['type']))
+                ->assertValidResponse($response, $question);
 
             $attempt->answers()->updateOrCreate(
                 ['question_uuid' => $questionUuid],

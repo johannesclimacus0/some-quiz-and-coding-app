@@ -34,9 +34,13 @@ class StartQuizAttemptApiTest extends TestCase
                         'quiz' => ['uuid', 'title', 'description'],
                         'questions' => [[
                             'uuid',
+                            'type',
                             'text',
                             'position',
-                            'answers' => [['uuid', 'text', 'position']],
+                            'max_points',
+                            'public_config' => [
+                                'answers' => [['uuid', 'text', 'position']],
+                            ],
                         ]],
                     ],
                     'responses',

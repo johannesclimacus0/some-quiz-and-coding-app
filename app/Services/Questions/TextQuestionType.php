@@ -3,11 +3,13 @@
 namespace App\Services\Questions;
 
 use App\Enums\QuestionType;
+use App\Exceptions\QuizAttempts\InvalidQuestionResponse;
 use App\Models\Question;
-use LogicException;
 
-class TextQuestionType implements QuestionTypeHandler
+final class TextQuestionType implements QuestionTypeHandler
 {
+    private const MAX_LENGTH = 5000;
+
     public function type(): QuestionType
     {
         return QuestionType::Text;
@@ -17,7 +19,7 @@ class TextQuestionType implements QuestionTypeHandler
     {
         return [
             'public_config' => [
-                'max_length' => 5000,
+                'max_length' => self::MAX_LENGTH,
             ],
             'grading_config' => [
                 'criteria' => null,
@@ -27,7 +29,24 @@ class TextQuestionType implements QuestionTypeHandler
 
     public function assertValidResponse(array $response, array $questionSnapshot): void
     {
-        throw new LogicException('Not implemented');
+        $text = $response['text'] ?? null;
+
+        if (array_keys($response) !== ['text'] || !is_string($text)) {
+            throw new InvalidQuestionResponse('response.text', 'Передан некорректный текстовый ответ');
+        }
+
+        if (trim($text) === '') {
+            throw new InvalidQuestionResponse('response.text', 'Введите текстовый ответ');
+        }
+
+        $maxLength = $questionSnapshot['public_config']['max_length'];
+
+        if (mb_strlen($text) > $maxLength) {
+            throw new InvalidQuestionResponse(
+                'response.text',
+                'Invalid length',
+            );
+        }
     }
 
     public function isComplete(array $response): bool

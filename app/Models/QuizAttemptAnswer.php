@@ -16,7 +16,8 @@ use Illuminate\Support\Carbon;
  * @property array<array-key, mixed> $response
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read \App\Models\QuizAttempt $attempt
+ * @property-read QuizAttempt $attempt
+ *
  * @method static \Database\Factories\QuizAttemptAnswerFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer newQuery()
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereQuizAttemptId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereResponse($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttemptAnswer whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 #[Fillable(['quiz_attempt_id', 'question_uuid', 'response'])]

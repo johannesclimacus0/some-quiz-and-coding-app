@@ -4,9 +4,11 @@ namespace App\Services\Questions;
 
 use App\Enums\QuestionType;
 use App\Exceptions\QuizAttempts\AnswerNotInQuestion;
+use App\Exceptions\QuizAttempts\InvalidQuestionResponse;
 use App\Models\Question;
+use Illuminate\Support\Str;
 
-class SingleChoiceQuestionType implements QuestionTypeHandler
+final class SingleChoiceQuestionType implements QuestionTypeHandler
 {
     public function type(): QuestionType
     {
@@ -15,12 +17,12 @@ class SingleChoiceQuestionType implements QuestionTypeHandler
 
     public function makeSnapshot(Question $question): array
     {
-        $correctAnswersUuid = null;
+        $correctAnswerUuid = null;
         $answers = [];
 
         foreach ($question->answers as $answer) {
             if ($answer->is_correct) {
-                $correctAnswersUuid = $answer->uuid;
+                $correctAnswerUuid = $answer->uuid;
             }
             $answers[] = [
                 'uuid' => $answer->uuid,
@@ -34,7 +36,7 @@ class SingleChoiceQuestionType implements QuestionTypeHandler
                 'answers' => $answers,
             ],
             'grading_config' => [
-                'correct_answer_uuid' => $correctAnswersUuid,
+                'correct_answer_uuid' => $correctAnswerUuid,
             ],
         ];
     }
@@ -43,9 +45,15 @@ class SingleChoiceQuestionType implements QuestionTypeHandler
     {
         $answerUuid = $response['answer_uuid'] ?? null;
 
+        if (array_keys($response) !== ['answer_uuid'] || !is_string($answerUuid) || !Str::isUuid($answerUuid)) {
+            throw new InvalidQuestionResponse(
+                'response.answer_uuid',
+                'Invalid answer uuid',
+            );
+        }
+
         $belongsToQuestion = is_string($answerUuid)
-            && collect($questionSnapshot['public_config']['answers'])
-                ->contains('uuid', $answerUuid);
+            && collect($questionSnapshot['public_config']['answers'])->contains('uuid', $answerUuid);
 
         if (!$belongsToQuestion) {
             throw new AnswerNotInQuestion;

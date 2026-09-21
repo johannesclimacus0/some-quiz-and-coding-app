@@ -5,7 +5,7 @@ namespace App\Services\Questions;
 use App\Enums\QuestionType;
 use LogicException;
 
-class QuestionTypeRegistry
+final class QuestionTypeRegistry
 {
     private array $handlers;
 

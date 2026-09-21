@@ -26,9 +26,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property bool $deleted_by_parent
- * @property-read Collection<int, \App\Models\Answer> $answers
+ * @property-read Collection<int, Answer> $answers
  * @property-read int|null $answers_count
- * @property-read \App\Models\Quiz|null $quiz
+ * @property-read Quiz|null $quiz
+ *
  * @method static \Database\Factories\QuestionFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question newQuery()
@@ -47,6 +48,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 #[Fillable(['text', 'position'])]

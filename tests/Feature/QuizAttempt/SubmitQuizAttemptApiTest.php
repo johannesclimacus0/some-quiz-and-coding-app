@@ -31,14 +31,14 @@ class SubmitQuizAttemptApiTest extends TestCase
         $base = '/api/quizzes/' . $quiz->uuid . '/attempt';
         $attempt = $this->actingAs($user)->postJson($base)->json('data');
         [$first, $second] = $attempt['snapshot']['questions'];
-        $firstCorrect = $first['answers'][0]['uuid'];
-        $secondWrong = $second['answers'][1]['uuid'];
+        $firstCorrect = $first['public_config']['answers'][0]['uuid'];
+        $secondWrong = $second['public_config']['answers'][1]['uuid'];
 
         $this->putJson($base . '/answers/' . $first['uuid'], ['response' => ['answer_uuid' => $firstCorrect]])->assertOk();
         $this->putJson($base . '/answers/' . $second['uuid'], ['response' => ['answer_uuid' => $secondWrong]])->assertOk();
 
         Answer::query()->where('uuid', $firstCorrect)->update(['is_correct' => false]);
-        Answer::query()->where('uuid', $first['answers'][1]['uuid'])->update(['is_correct' => true]);
+        Answer::query()->where('uuid', $first['public_config']['answers'][1]['uuid'])->update(['is_correct' => true]);
 
         $response = $this->postJson($base . '/submit')
             ->assertOk()

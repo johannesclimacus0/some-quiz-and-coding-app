@@ -6,7 +6,7 @@ import {
     quizAttemptsApi,
     type AttemptQuestion,
     type QuizDetails,
-    type SingleChoiceResponse,
+    type QuestionResponse,
 } from '../api/quizAttempts'
 import AlertMessage from '../components/AlertMessage.vue'
 import BaseButton from '../components/BaseButton.vue'
@@ -15,7 +15,8 @@ import UserLayout from '../layouts/UserLayout.vue'
 
 const route = useRoute()
 const details = ref<QuizDetails | null>(null)
-const responses = ref<Record<string, SingleChoiceResponse>>({})
+const responses = ref<Record<string, QuestionResponse>>({})
+const textDrafts = ref<Record<string, string>>({})
 const savingQuestion = ref<string | null>(null)
 const saveErrors = ref<Record<string, string>>({})
 const { busy, error, run } = useApiOperation()
@@ -25,7 +26,7 @@ const questions = computed(() => attempt.value?.snapshot.questions ?? [])
 const allAnswered = computed(
     () =>
         questions.value.length > 0 &&
-        questions.value.every((question) => Boolean(responses.value[question.uuid]?.answer_uuid)),
+        questions.value.every((question) => isResponseComplete(responses.value[question.uuid])),
 )
 const deadlineExpired = computed(() =>
     Boolean(details.value?.due_at && new Date(details.value.due_at).getTime() < Date.now()),
@@ -35,7 +36,7 @@ const mutable = computed(() => attempt.value?.status === 'in_progress' && !savin
 async function load(): Promise<void> {
     await run(async () => {
         details.value = await quizAttemptsApi.showQuiz({ quiz: String(route.params.quiz) })
-        responses.value = { ...(details.value.attempt?.responses ?? {}) }
+        restoreResponses(details.value.attempt?.responses ?? {})
     })
 }
 
@@ -43,14 +44,14 @@ async function start(): Promise<void> {
     if (!details.value) return
     await run(async () => {
         details.value!.attempt = await quizAttemptsApi.start({ quiz: details.value!.uuid })
-        responses.value = { ...details.value!.attempt!.responses }
+        restoreResponses(details.value!.attempt!.responses)
     })
 }
 
-async function choose(question: AttemptQuestion, answerUuid: string): Promise<void> {
+async function saveResponse(question: AttemptQuestion, response: QuestionResponse): Promise<void> {
     if (!details.value || !mutable.value) return
     const previous = responses.value[question.uuid]
-    responses.value = { ...responses.value, [question.uuid]: { answer_uuid: answerUuid } }
+    responses.value = { ...responses.value, [question.uuid]: response }
     savingQuestion.value = question.uuid
     delete saveErrors.value[question.uuid]
 
@@ -58,10 +59,10 @@ async function choose(question: AttemptQuestion, answerUuid: string): Promise<vo
         const updated = await quizAttemptsApi.saveAnswer({
             quiz: details.value.uuid,
             question: question.uuid,
-            response: { answer_uuid: answerUuid },
+            response,
         })
         details.value.attempt = updated
-        responses.value = { ...updated.responses }
+        restoreResponses(updated.responses)
     } catch (cause: unknown) {
         const next = { ...responses.value }
         if (previous) next[question.uuid] = previous
@@ -73,6 +74,44 @@ async function choose(question: AttemptQuestion, answerUuid: string): Promise<vo
     } finally {
         savingQuestion.value = null
     }
+}
+
+async function choose(question: AttemptQuestion, answerUuid: string): Promise<void> {
+    await saveResponse(question, { answer_uuid: answerUuid })
+}
+
+async function saveText(question: AttemptQuestion): Promise<void> {
+    await saveResponse(question, { text: textDrafts.value[question.uuid] ?? '' })
+}
+
+function restoreResponses(next: Record<string, QuestionResponse>): void {
+    responses.value = { ...next }
+    textDrafts.value = Object.fromEntries(
+        Object.entries(next).flatMap(([questionUuid, response]) =>
+            'text' in response ? [[questionUuid, response.text]] : [],
+        ),
+    )
+}
+
+function isResponseComplete(response: QuestionResponse | undefined): boolean {
+    return Boolean(selectedAnswerUuid(response)) || responseText(response).trim() !== ''
+}
+
+function selectedAnswerUuid(response: QuestionResponse | undefined): string | undefined {
+    return response && 'answer_uuid' in response ? response.answer_uuid : undefined
+}
+
+function responseText(response: QuestionResponse | undefined): string {
+    return response && 'text' in response ? response.text : ''
+}
+
+function questionState(question: AttemptQuestion): string {
+    if (savingQuestion.value === question.uuid) return 'saving'
+    if (isResponseComplete(responses.value[question.uuid])) return 'saved'
+    if (question.type === 'text' && (textDrafts.value[question.uuid] ?? '').trim() !== '')
+        return 'draft'
+
+    return 'empty'
 }
 
 async function submit(): Promise<void> {
@@ -228,15 +267,16 @@ watch(
                                     {{
                                         savingQuestion === question.uuid
                                             ? 'saving'
-                                            : responses[question.uuid]?.answer_uuid
-                                              ? 'saved'
-                                              : 'empty'
+                                            : questionState(question)
                                     }}
                                 </span>
                             </header>
-                            <div class="divide-y divide-[#e0dae4] dark:divide-[#292c36]">
+                            <div
+                                v-if="question.type === 'single_choice'"
+                                class="divide-y divide-[#e0dae4] dark:divide-[#292c36]"
+                            >
                                 <label
-                                    v-for="answer in question.answers"
+                                    v-for="answer in question.public_config.answers"
                                     :key="answer.uuid"
                                     class="flex cursor-pointer items-start gap-3 px-4 py-3 text-sm transition-colors hover:bg-[#eeeaf2] dark:hover:bg-[#1b1e27]"
                                 >
@@ -244,13 +284,41 @@ watch(
                                         type="radio"
                                         :name="`question-${question.uuid}`"
                                         :checked="
-                                            responses[question.uuid]?.answer_uuid === answer.uuid
+                                            selectedAnswerUuid(responses[question.uuid]) ===
+                                            answer.uuid
                                         "
                                         class="mt-0.5 size-4 accent-[#557789] dark:accent-[#8ca8b7]"
                                         @change="choose(question, answer.uuid)"
                                     />
                                     <span>{{ answer.text }}</span>
                                 </label>
+                            </div>
+                            <div
+                                v-else
+                                class="space-y-3 p-4"
+                            >
+                                <textarea
+                                    v-model="textDrafts[question.uuid]"
+                                    :maxlength="question.public_config.max_length"
+                                    rows="8"
+                                    class="w-full resize-y border border-[#c9c1cf] bg-white p-3 font-mono text-sm leading-6 outline-none focus:border-[#1793d1] dark:border-[#3b3d4d] dark:bg-[#15171e]"
+                                    placeholder="Введите ответ…"
+                                />
+                                <div class="flex items-center justify-between gap-3">
+                                    <span
+                                        class="font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                                    >
+                                        {{ (textDrafts[question.uuid] ?? '').length }} /
+                                        {{ question.public_config.max_length }}
+                                    </span>
+                                    <BaseButton
+                                        :loading="savingQuestion === question.uuid"
+                                        loading-text="Сохранение…"
+                                        @click="saveText(question)"
+                                    >
+                                        Сохранить ответ
+                                    </BaseButton>
+                                </div>
                             </div>
                             <p
                                 v-if="saveErrors[question.uuid]"

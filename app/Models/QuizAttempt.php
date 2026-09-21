@@ -25,10 +25,11 @@ use Illuminate\Support\Carbon;
  * @property int $total_questions
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Collection<int, \App\Models\QuizAttemptAnswer> $answers
+ * @property-read Collection<int, QuizAttemptAnswer> $answers
  * @property-read int|null $answers_count
- * @property-read \App\Models\Quiz|null $quiz
- * @property-read \App\Models\User $user
+ * @property-read Quiz|null $quiz
+ * @property-read User $user
+ *
  * @method static \Database\Factories\QuizAttemptFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt newQuery()
@@ -44,6 +45,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 #[Fillable(['user_id', 'quiz_id', 'snapshot', 'started_at', 'submitted_at', 'correct_answers', 'total_questions'])]

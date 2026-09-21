@@ -8,12 +8,28 @@ export interface AttemptAnswer {
     position: number
 }
 
-export interface AttemptQuestion {
+interface BaseAttemptQuestion {
     uuid: string
     text: string
     position: number
-    answers: AttemptAnswer[]
+    max_points: number
 }
+
+export interface SingleChoiceAttemptQuestion extends BaseAttemptQuestion {
+    type: 'single_choice'
+    public_config: {
+        answers: AttemptAnswer[]
+    }
+}
+
+export interface TextAttemptQuestion extends BaseAttemptQuestion {
+    type: 'text'
+    public_config: {
+        max_length: number
+    }
+}
+
+export type AttemptQuestion = SingleChoiceAttemptQuestion | TextAttemptQuestion
 
 export interface AttemptResult {
     correct_answers: number
@@ -26,6 +42,12 @@ export interface SingleChoiceResponse {
     answer_uuid: string
 }
 
+export interface TextResponse {
+    text: string
+}
+
+export type QuestionResponse = SingleChoiceResponse | TextResponse
+
 export interface QuizAttempt {
     uuid: string
     status: AttemptStatus
@@ -33,7 +55,7 @@ export interface QuizAttempt {
         quiz: { uuid: string; title: string; description: string | null }
         questions: AttemptQuestion[]
     }
-    responses: Record<string, SingleChoiceResponse>
+    responses: Record<string, QuestionResponse>
     result: AttemptResult | null
     started_at: string
 }
@@ -63,7 +85,7 @@ export const quizAttemptsApi = {
     }: {
         quiz: string
         question: string
-        response: SingleChoiceResponse
+        response: QuestionResponse
     }): Promise<QuizAttempt> {
         return (
             await http.put<{ data: QuizAttempt }>(`${root}/${quiz}/attempt/answers/${question}`, {

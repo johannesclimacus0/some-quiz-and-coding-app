@@ -22,16 +22,11 @@ class QuizAttemptResource extends JsonResource
                     ->map(function (array $question): array {
                         return [
                             'uuid' => $question['uuid'],
+                            'type' => $question['type'],
                             'text' => $question['text'],
                             'position' => $question['position'],
-                            'answers' => collect($question['public_config']['answers'])
-                                ->map(fn (array $answer): array => [
-                                    'uuid' => $answer['uuid'],
-                                    'text' => $answer['text'],
-                                    'position' => $answer['position'],
-                                ])
-                                ->values()
-                                ->all(),
+                            'max_points' => $question['max_points'],
+                            'public_config' => $question['public_config'],
                         ];
                     })
                     ->values()
