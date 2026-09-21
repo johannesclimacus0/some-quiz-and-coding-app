@@ -133,13 +133,13 @@ watch(
             <div class="flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
                 <RouterLink
                     :to="{ name: 'admin.groups' }"
-                    class="text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                    class="text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                 >
                     &lt;-- список групп
                 </RouterLink>
                 <span
                     v-if="group"
-                    class="text-[#96909e] dark:text-[#656879]"
+                    class="text-[#827a8b] dark:text-[#9792a5]"
                 >
                     id:{{ group.uuid.slice(0, 16) }}
                 </span>
@@ -147,20 +147,20 @@ watch(
             <AlertMessage :message="mainOperation.error.value" />
             <p
                 v-if="mainOperation.busy.value && !group"
-                class="border border-[#c9c1cf] p-8 text-center font-mono text-xs dark:border-[#343746]"
+                class="border border-[#cec9d5] p-8 text-center font-mono text-xs dark:border-[#363845]"
             >
                 загрузка группы...
             </p>
             <template v-if="group">
                 <section
-                    class="border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                    class="border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
                 >
                     <header
-                        class="flex flex-wrap items-center justify-between gap-3 border-b border-[#c9c1cf] bg-[#e8e4eb] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#181b23]"
+                        class="flex flex-wrap items-center justify-between gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                     >
                         <span class="inline-flex">
                             <span class="text-[#1793d1]">group</span>
-                            <span class="text-[#96909e] dark:text-[#656879]">://</span>
+                            <span class="text-[#827a8b] dark:text-[#9792a5]">://</span>
                             {{ group.name }}
                         </span>
                         <button
@@ -201,18 +201,18 @@ watch(
                 </section>
                 <div class="grid gap-4 xl:grid-cols-2">
                     <section
-                        class="min-w-0 overflow-hidden border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                        class="min-w-0 overflow-hidden border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
                     >
                         <header
-                            class="flex items-center border-b border-[#c9c1cf] bg-[#e8e4eb] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#181b23]"
+                            class="flex items-center border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                         >
                             <span class="text-[#1793d1]">members</span>
-                            <span class="text-[#96909e] dark:text-[#656879]">://</span>
+                            <span class="text-[#827a8b] dark:text-[#9792a5]">://</span>
                             {{ group.users_count }}
                         </header>
                         <form
                             @submit.prevent="searchUsers"
-                            class="flex items-end gap-2 border-b border-[#d8d1dc] p-3 dark:border-[#343746]"
+                            class="flex items-end gap-2 border-b border-[#cec9d5] p-3 dark:border-[#363845]"
                         >
                             <FormField
                                 v-model="userSearch"
@@ -239,11 +239,11 @@ watch(
                         </p>
                         <p
                             v-else-if="users && !users.data.length"
-                            class="p-6 text-center font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                            class="p-6 text-center font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                         >
                             пользователи не найдены
                         </p>
-                        <ul class="divide-y divide-[#e0dae4] dark:divide-[#292c36]">
+                        <ul class="divide-y divide-[#dfdae5] dark:divide-[#242632]">
                             <li
                                 v-for="user in users?.data"
                                 :key="user.uuid"
@@ -252,7 +252,7 @@ watch(
                                 <div class="min-w-0">
                                     <p class="truncate font-mono text-sm">{{ user.name }}</p>
                                     <p
-                                        class="truncate font-mono text-[0.6875rem] text-[#68616f] dark:text-[#918da0]"
+                                        class="truncate font-mono text-[0.6875rem] text-[#686171] dark:text-[#9792a5]"
                                     >
                                         {{ user.email }} · {{ user.uuid.slice(0, 16) }}
                                     </p>
@@ -264,7 +264,7 @@ watch(
                                     :class="
                                         user.assigned
                                             ? 'text-[#b24d91] hover:text-[#c14378] dark:text-[#e781bd]'
-                                            : 'text-[#557789] hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]'
+                                            : 'text-[#447b9e] hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]'
                                     "
                                     :disabled="userOperation.busy.value"
                                 >
@@ -282,18 +282,18 @@ watch(
                         />
                     </section>
                     <section
-                        class="min-w-0 overflow-hidden border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                        class="min-w-0 overflow-hidden border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
                     >
                         <header
-                            class="flex items-center border-b border-[#c9c1cf] bg-[#e8e4eb] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#181b23]"
+                            class="flex items-center border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                         >
                             <span class="text-[#1793d1]">assignments</span>
-                            <span class="text-[#96909e] dark:text-[#656879]">://</span>
+                            <span class="text-[#827a8b] dark:text-[#9792a5]">://</span>
                             {{ group.quizzes_count }}
                         </header>
                         <form
                             @submit.prevent="searchQuizzes"
-                            class="flex items-end gap-2 border-b border-[#d8d1dc] p-3 dark:border-[#343746]"
+                            class="flex items-end gap-2 border-b border-[#cec9d5] p-3 dark:border-[#363845]"
                         >
                             <FormField
                                 v-model="quizSearch"
@@ -320,11 +320,11 @@ watch(
                         </p>
                         <p
                             v-else-if="quizzes && !quizzes.data.length"
-                            class="p-6 text-center font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                            class="p-6 text-center font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                         >
                             квизы не найдены
                         </p>
-                        <ul class="divide-y divide-[#e0dae4] dark:divide-[#292c36]">
+                        <ul class="divide-y divide-[#dfdae5] dark:divide-[#242632]">
                             <li
                                 v-for="quiz in quizzes?.data"
                                 :key="quiz.uuid"
@@ -333,7 +333,7 @@ watch(
                                 <div class="min-w-0">
                                     <p class="truncate font-mono text-sm">{{ quiz.title }}</p>
                                     <p
-                                        class="truncate font-mono text-[0.6875rem] text-[#68616f] dark:text-[#918da0]"
+                                        class="truncate font-mono text-[0.6875rem] text-[#686171] dark:text-[#9792a5]"
                                     >
                                         {{ quiz.uuid.slice(0, 16) }} ·
                                         {{
@@ -349,7 +349,7 @@ watch(
                                     :class="
                                         quiz.assigned
                                             ? 'text-[#b24d91] hover:text-[#c14378] dark:text-[#e781bd]'
-                                            : 'text-[#557789] hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]'
+                                            : 'text-[#447b9e] hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]'
                                     "
                                     :disabled="quizOperation.busy.value"
                                     @click="toggleQuiz(quiz)"

@@ -9,10 +9,10 @@ defineProps<{
 
 <template>
     <div
-        class="flex min-h-dvh flex-col bg-[#f2eff5] text-[#27232d] selection:bg-[#d7a4ec] selection:text-[#2b1735] dark:bg-[#0f1117] dark:text-[#e8e5ef] dark:selection:bg-[#783f90] dark:selection:text-white"
+        class="flex min-h-dvh flex-col bg-[#f3f1f6] text-[#2c2833] selection:bg-[#d7a4ec] selection:text-[#2b1735] dark:bg-[#101219] dark:text-[#e0dce8] dark:selection:bg-[#783f90] dark:selection:text-white"
     >
         <header
-            class="border-b border-[#c9c1cf] bg-[#fbfafd] px-4 dark:border-[#343746] dark:bg-[#171920] sm:px-6"
+            class="border-b border-[#cec9d5] bg-[#fcfafd] px-4 dark:border-[#363845] dark:bg-[#191b24] sm:px-6"
         >
             <div
                 class="mx-auto flex w-full max-w-[90rem] flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3"
@@ -23,24 +23,27 @@ defineProps<{
                     </p>
                     <h1 class="font-mono text-sm font-medium">{{ title }}</h1>
                 </div>
-                <nav class="flex items-center gap-4 font-mono text-xs font-medium">
+                <nav
+                    aria-label="Разделы админки"
+                    class="flex flex-wrap items-center gap-4 font-mono text-xs font-medium"
+                >
                     <RouterLink
                         :to="{ name: 'admin.quizzes' }"
-                        class="text-[#557789] hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                        class="text-[#447b9e] hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                         active-class="text-[#b24d91]! dark:text-[#e781bd]!"
                     >
                         quizzes
                     </RouterLink>
                     <RouterLink
                         :to="{ name: 'admin.groups' }"
-                        class="text-[#557789] hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                        class="text-[#447b9e] hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                         active-class="text-[#b24d91]! dark:text-[#e781bd]!"
                     >
                         groups
                     </RouterLink>
                     <RouterLink
                         :to="{ name: 'home' }"
-                        class="text-[#777080] transition-colors hover:text-[#4d4653] dark:text-[#918da0] dark:hover:text-[#c5c0cd]"
+                        class="text-[#777080] transition-colors hover:text-[#4d4653] dark:text-[#9792a5] dark:hover:text-[#c5c0cd]"
                     >
                         workspace
                     </RouterLink>

@@ -2,6 +2,7 @@
 
 namespace App\Services\Questions;
 
+use App\Enums\AnswerGradingStatus;
 use App\Enums\QuestionType;
 use App\Exceptions\QuizAttempts\InvalidQuestionResponse;
 use App\Models\Question;
@@ -53,5 +54,18 @@ final class TextQuestionType implements QuestionTypeHandler
     {
         return is_string($response['text'] ?? null)
             && trim($response['text']) !== '';
+    }
+
+    public function initialGrading(array $questionSnapshot, array $response): array
+    {
+        return [
+            'grading_status' => AnswerGradingStatus::PendingManual,
+            'awarded_points' => null,
+        ];
+    }
+
+    public function isManual(): bool
+    {
+        return true;
     }
 }

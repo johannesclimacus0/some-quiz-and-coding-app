@@ -2,6 +2,7 @@
 
 namespace App\Services\Questions;
 
+use App\Enums\AnswerGradingStatus;
 use App\Enums\QuestionType;
 use App\Exceptions\QuizAttempts\AnswerNotInQuestion;
 use App\Exceptions\QuizAttempts\InvalidQuestionResponse;
@@ -65,5 +66,20 @@ final class SingleChoiceQuestionType implements QuestionTypeHandler
         return isset($response['answer_uuid'])
             && is_string($response['answer_uuid'])
             && $response['answer_uuid'] !== '';
+    }
+
+    public function initialGrading(array $questionSnapshot, array $response): array
+    {
+        return [
+            'grading_status' => AnswerGradingStatus::Graded,
+            'awarded_points' => $response['answer_uuid'] === $questionSnapshot['grading_config']['correct_answer_uuid']
+                ? $questionSnapshot['max_points']
+                : 0,
+        ];
+    }
+
+    public function isManual(): bool
+    {
+        return false;
     }
 }

@@ -17,12 +17,20 @@ const route = useRoute()
 const details = ref<QuizDetails | null>(null)
 const responses = ref<Record<string, QuestionResponse>>({})
 const textDrafts = ref<Record<string, string>>({})
+const activeIndex = ref(0)
 const savingQuestion = ref<string | null>(null)
 const saveErrors = ref<Record<string, string>>({})
 const { busy, error, run } = useApiOperation()
 
 const attempt = computed(() => details.value?.attempt ?? null)
 const questions = computed(() => attempt.value?.snapshot.questions ?? [])
+const currentQuestion = computed(() => questions.value[activeIndex.value])
+const savedCount = computed(
+    () =>
+        questions.value.filter((question) => isResponseComplete(responses.value[question.uuid]))
+            .length,
+)
+const hasDrafts = computed(() => questions.value.some(isDirty))
 const allAnswered = computed(
     () =>
         questions.value.length > 0 &&
@@ -31,7 +39,9 @@ const allAnswered = computed(
 const deadlineExpired = computed(() =>
     Boolean(details.value?.due_at && new Date(details.value.due_at).getTime() < Date.now()),
 )
-const mutable = computed(() => attempt.value?.status === 'in_progress' && !savingQuestion.value)
+const mutable = computed(
+    () => attempt.value?.status === 'in_progress' && !savingQuestion.value && !busy.value,
+)
 
 async function load(): Promise<void> {
     await run(async () => {
@@ -62,7 +72,7 @@ async function saveResponse(question: AttemptQuestion, response: QuestionRespons
             response,
         })
         details.value.attempt = updated
-        restoreResponses(updated.responses)
+        responses.value = { ...updated.responses }
     } catch (cause: unknown) {
         const next = { ...responses.value }
         if (previous) next[question.uuid] = previous
@@ -105,26 +115,45 @@ function responseText(response: QuestionResponse | undefined): string {
     return response && 'text' in response ? response.text : ''
 }
 
+function isDirty(question: AttemptQuestion): boolean {
+    return (
+        question.type === 'text' &&
+        (textDrafts.value[question.uuid] ?? '') !== responseText(responses.value[question.uuid])
+    )
+}
+
+function goTo(index: number): void {
+    if (index >= 0 && index < questions.value.length) activeIndex.value = index
+}
+
 function questionState(question: AttemptQuestion): string {
     if (savingQuestion.value === question.uuid) return 'saving'
+    if (saveErrors.value[question.uuid]) return 'error'
+    if (isDirty(question)) return 'draft'
     if (isResponseComplete(responses.value[question.uuid])) return 'saved'
-    if (question.type === 'text' && (textDrafts.value[question.uuid] ?? '').trim() !== '')
-        return 'draft'
 
     return 'empty'
+}
+
+const stateLabels: Record<string, string> = {
+    saving: 'Сохранение…',
+    saved: 'Сохранён',
+    draft: 'Черновик',
+    empty: 'Нет ответа',
+    error: 'Ошибка сохранения',
 }
 
 async function submit(): Promise<void> {
     if (
         !details.value ||
         !allAnswered.value ||
+        hasDrafts.value ||
+        !mutable.value ||
         !window.confirm('Завершить попытку? После этого ответы изменить нельзя.')
     )
         return
     await run(async () => {
-        const result = await quizAttemptsApi.submit({ quiz: details.value!.uuid })
-        details.value!.attempt!.status = 'completed'
-        details.value!.attempt!.result = result
+        details.value!.attempt = await quizAttemptsApi.submit({ quiz: details.value!.uuid })
     })
 }
 
@@ -134,7 +163,14 @@ function formatDate(value: string | null): string {
 
 watch(
     () => route.params.quiz,
-    () => void load(),
+    () => {
+        activeIndex.value = 0
+        details.value = null
+        responses.value = {}
+        textDrafts.value = {}
+        saveErrors.value = {}
+        void load()
+    },
     { immediate: true },
 )
 </script>
@@ -144,38 +180,40 @@ watch(
         <template #header-actions>
             <RouterLink
                 :to="{ name: 'home' }"
-                class="font-mono text-xs text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                class="font-mono text-xs text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
             >
                 &lt;-- список квизов
             </RouterLink>
         </template>
 
-        <div class="mx-auto max-w-4xl space-y-4">
+        <div class="attempt-workspace min-w-0 space-y-4">
             <AlertMessage :message="error" />
             <p
                 v-if="busy && !details"
-                class="border border-[#c9c1cf] p-8 text-center font-mono text-xs dark:border-[#343746]"
+                class="border border-[#cec9d5] p-8 text-center font-mono text-xs dark:border-[#363845]"
             >
                 загрузка квиза...
             </p>
             <template v-if="details">
                 <section
-                    class="border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                    class="border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
                 >
                     <header
-                        class="flex flex-wrap items-center justify-between gap-3 border-b border-[#c9c1cf] bg-[#e8e4eb] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#181b23]"
+                        class="flex flex-wrap items-center justify-between gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                     >
                         <span class="inline-flex">
                             <span class="text-[#1793d1]">quiz</span>
-                            <span class="text-[#96909e] dark:text-[#656879]">://</span>
+                            <span class="text-[#827a8b] dark:text-[#9792a5]">://</span>
                             {{ details.uuid.slice(0, 16) }}
                         </span>
-                        <span class="text-[#68616f] dark:text-[#918da0]">
+                        <span class="text-[#686171] dark:text-[#9792a5]">
                             {{ attempt?.status ?? 'not_started' }}
                         </span>
                     </header>
                     <div class="space-y-3 p-4">
-                        <h2 class="font-mono text-lg font-medium">{{ details.title }}</h2>
+                        <h2 class="break-words font-mono text-lg font-medium">
+                            {{ details.title }}
+                        </h2>
                         <p
                             v-if="details.description"
                             class="text-sm leading-6 text-[#5f5866] dark:text-[#b7b2c2]"
@@ -183,7 +221,7 @@ watch(
                             {{ details.description }}
                         </p>
                         <div
-                            class="flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                            class="flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                         >
                             <span>вопросов={{ details.questions_count }}</span>
                             <span>due_at={{ formatDate(details.due_at) }}</span>
@@ -192,7 +230,7 @@ watch(
                 </section>
                 <section
                     v-if="!attempt"
-                    class="border border-[#c9c1cf] bg-[#fbfafd] p-4 dark:border-[#343746] dark:bg-[#11131a]"
+                    class="border border-[#cec9d5] bg-[#fcfafd] p-4 dark:border-[#363845] dark:bg-[#101219]"
                 >
                     <p
                         v-if="deadlineExpired"
@@ -211,30 +249,59 @@ watch(
                     </BaseButton>
                 </section>
                 <section
+                    v-else-if="attempt.status === 'submitted'"
+                    class="border border-[#cec9d5] bg-[#fcfafd] p-6 text-center dark:border-[#363845] dark:bg-[#101219]"
+                >
+                    <p class="font-mono text-lg">Ожидает проверки</p>
+                    <p class="mt-2 text-sm text-[#686171] dark:text-[#9792a5]">
+                        Администратор проверит текстовые ответы и опубликует итог.
+                    </p>
+                </section>
+                <section
                     v-else-if="attempt.status === 'completed' && attempt.result"
-                    class="border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                    class="border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
                 >
                     <header
-                        class="border-b border-[#c9c1cf] bg-[#e8e4eb] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#181b23]"
+                        class="border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                     >
                         result://completed
                     </header>
                     <div class="grid gap-4 p-6 text-center sm:grid-cols-2">
                         <div>
                             <p class="font-mono text-3xl">
-                                {{ attempt.result.correct_answers }} /
-                                {{ attempt.result.total_questions }}
+                                {{ attempt.result.earned_points }} /
+                                {{ attempt.result.max_points }}
                             </p>
-                            <p class="mt-1 text-xs text-[#68616f] dark:text-[#918da0]">
-                                правильных ответов
-                            </p>
+                            <p class="mt-1 text-xs text-[#686171] dark:text-[#9792a5]">баллов</p>
                         </div>
                         <div>
-                            <p class="font-mono text-3xl text-[#557789] dark:text-[#8ca8b7]">
+                            <p class="font-mono text-3xl text-[#447b9e] dark:text-[#8eb4d1]">
                                 {{ attempt.result.percentage }}%
                             </p>
-                            <p class="mt-1 text-xs text-[#68616f] dark:text-[#918da0]">результат</p>
+                            <p class="mt-1 text-xs text-[#686171] dark:text-[#9792a5]">результат</p>
                         </div>
+                    </div>
+                    <div
+                        v-if="questions.some((question) => responseText(responses[question.uuid]))"
+                        class="space-y-2 border-t border-[#cec9d5] p-4 text-sm dark:border-[#363845]"
+                    >
+                        <template
+                            v-for="question in questions"
+                            :key="question.uuid"
+                        >
+                            <p
+                                v-if="
+                                    responseText(responses[question.uuid]) &&
+                                    responses[question.uuid].feedback
+                                "
+                                class="border border-[#cec9d5] p-3 dark:border-[#363845]"
+                            >
+                                <span class="font-mono text-xs">
+                                    Комментарий к «{{ question.text }}»:
+                                </span>
+                                {{ responses[question.uuid].feedback }}
+                            </p>
+                        </template>
                     </div>
                 </section>
                 <template v-else>
@@ -245,108 +312,306 @@ watch(
                         Срок прохождения истёк. Ответы сохранены, но завершить попытку нельзя.
                     </p>
 
-                    <fieldset
-                        :disabled="!mutable"
-                        class="space-y-4"
+                    <section
+                        class="overflow-hidden border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
                     >
-                        <section
-                            v-for="(question, index) in questions"
-                            :key="question.uuid"
-                            class="border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                        <header
+                            class="flex flex-wrap items-center justify-between gap-2 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                         >
-                            <header
-                                class="flex items-center justify-between gap-3 border-b border-[#d8d1dc] bg-[#f2eff5] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#15171e]"
+                            <span>
+                                <span class="text-[#1793d1]">workspace</span>
+                                <span class="text-[#827a8b]">/</span>
+                                ~/questions
+                            </span>
+                            <span class="text-[#686171] dark:text-[#9792a5]">
+                                Сохранено {{ savedCount }} из {{ questions.length }}
+                            </span>
+                        </header>
+                        <div class="grid min-w-0 lg:grid-cols-[15rem_minmax(0,1fr)]">
+                            <aside
+                                class="min-w-0 border-b border-[#cec9d5] bg-[#f3f1f6] p-3 dark:border-[#363845] dark:bg-[#191b24] lg:border-r lg:border-b-0"
                             >
-                                <span>
-                                    <span class="text-[#1793d1]">
-                                        Q{{ String(index + 1).padStart(2, '0') }}
-                                    </span>
-                                    · {{ question.text }}
-                                </span>
-                                <span class="text-[0.6875rem] text-[#96909e] dark:text-[#656879]">
-                                    {{
-                                        savingQuestion === question.uuid
-                                            ? 'saving'
-                                            : questionState(question)
-                                    }}
-                                </span>
-                            </header>
-                            <div
-                                v-if="question.type === 'single_choice'"
-                                class="divide-y divide-[#e0dae4] dark:divide-[#292c36]"
-                            >
-                                <label
-                                    v-for="answer in question.public_config.answers"
-                                    :key="answer.uuid"
-                                    class="flex cursor-pointer items-start gap-3 px-4 py-3 text-sm transition-colors hover:bg-[#eeeaf2] dark:hover:bg-[#1b1e27]"
+                                <p
+                                    class="mb-3 hidden border-b border-[#cec9d5] pb-2 font-mono text-[0.625rem] uppercase tracking-widest text-[#686171] dark:border-[#363845] dark:text-[#9792a5] lg:block"
                                 >
-                                    <input
-                                        type="radio"
-                                        :name="`question-${question.uuid}`"
-                                        :checked="
-                                            selectedAnswerUuid(responses[question.uuid]) ===
-                                            answer.uuid
+                                    explorer / вопросы
+                                </p>
+                                <nav
+                                    aria-label="Вопросы попытки"
+                                    class="flex flex-wrap gap-0.5 lg:flex-col"
+                                >
+                                    <button
+                                        v-for="(item, index) in questions"
+                                        :key="item.uuid"
+                                        type="button"
+                                        :aria-current="index === activeIndex ? 'step' : undefined"
+                                        :aria-label="`Вопрос ${index + 1}: ${stateLabels[questionState(item)]}`"
+                                        :title="item.text"
+                                        class="flex min-h-10 min-w-10 items-center gap-2 border px-2 py-2 text-left font-mono text-xs transition-colors focus-visible:outline-2 focus-visible:outline-[#1793d1] lg:w-full"
+                                        :class="
+                                            index === activeIndex
+                                                ? 'border-[#1793d1]/40 bg-[#1793d1]/10 shadow-[inset_2px_0_0_#1793d1]'
+                                                : 'border-transparent hover:bg-[#f3f1f6] dark:hover:bg-[#242632]'
                                         "
-                                        class="mt-0.5 size-4 accent-[#557789] dark:accent-[#8ca8b7]"
-                                        @change="choose(question, answer.uuid)"
-                                    />
-                                    <span>{{ answer.text }}</span>
-                                </label>
-                            </div>
+                                        @click="goTo(index)"
+                                    >
+                                        <span class="shrink-0 text-[#1793d1]">
+                                            {{ String(index + 1).padStart(2, '0') }}
+                                        </span>
+                                        <span class="hidden min-w-0 flex-1 lg:block">
+                                            <span class="block truncate">
+                                                <span class="text-[#827a8b]">
+                                                    {{ String(index + 1).padStart(2, '0') }}_
+                                                </span>
+                                                {{
+                                                    item.type === 'text'
+                                                        ? 'response.txt'
+                                                        : 'choice.quiz'
+                                                }}
+                                            </span>
+                                            <span class="mt-1 block truncate text-[0.6875rem]">
+                                                {{ item.text }}
+                                            </span>
+                                            <span
+                                                class="mt-1 block text-[0.625rem] text-[#686171] dark:text-[#9792a5]"
+                                            >
+                                                {{ stateLabels[questionState(item)] }}
+                                            </span>
+                                        </span>
+                                        <span
+                                            aria-hidden="true"
+                                            class="shrink-0"
+                                            :class="
+                                                questionState(item) === 'saved'
+                                                    ? 'text-[#447b9e] dark:text-[#8eb4d1]'
+                                                    : 'text-[#b24d91] dark:text-[#e781bd]'
+                                            "
+                                        >
+                                            {{
+                                                questionState(item) === 'saved'
+                                                    ? '[x]'
+                                                    : questionState(item) === 'draft'
+                                                      ? '[~]'
+                                                      : questionState(item) === 'error'
+                                                        ? '[!]'
+                                                        : '[ ]'
+                                            }}
+                                        </span>
+                                    </button>
+                                </nav>
+                            </aside>
                             <div
-                                v-else
-                                class="space-y-3 p-4"
+                                v-if="currentQuestion"
+                                class="flex min-w-0 flex-col"
                             >
-                                <textarea
-                                    v-model="textDrafts[question.uuid]"
-                                    :maxlength="question.public_config.max_length"
-                                    rows="8"
-                                    class="w-full resize-y border border-[#c9c1cf] bg-white p-3 font-mono text-sm leading-6 outline-none focus:border-[#1793d1] dark:border-[#3b3d4d] dark:bg-[#15171e]"
-                                    placeholder="Введите ответ…"
-                                />
-                                <div class="flex items-center justify-between gap-3">
-                                    <span
-                                        class="font-mono text-xs text-[#68616f] dark:text-[#918da0]"
-                                    >
-                                        {{ (textDrafts[question.uuid] ?? '').length }} /
-                                        {{ question.public_config.max_length }}
+                                <header
+                                    class="flex flex-wrap items-center justify-between gap-2 border-b border-[#cec9d5] bg-[#f3f1f6] px-4 py-3 font-mono text-xs dark:border-[#363845] dark:bg-[#101219]"
+                                >
+                                    <span>
+                                        <span class="mr-2 text-[#1793d1]">
+                                            [{{ String(activeIndex + 1).padStart(2, '0') }}]
+                                        </span>
+                                        Вопрос {{ activeIndex + 1 }} / {{ questions.length }}
+                                        <span class="text-[#827a8b]">·</span>
+                                        {{
+                                            currentQuestion.type === 'text'
+                                                ? 'Текстовый ответ'
+                                                : 'Один вариант'
+                                        }}
                                     </span>
-                                    <BaseButton
-                                        :loading="savingQuestion === question.uuid"
-                                        loading-text="Сохранение…"
-                                        @click="saveText(question)"
+                                    <span class="text-[#686171] dark:text-[#9792a5]">
+                                        Баллы: {{ currentQuestion.max_points }}
+                                    </span>
+                                </header>
+                                <div class="min-w-0 flex-1 space-y-5 p-4 sm:p-6 lg:min-h-[26rem]">
+                                    <p
+                                        aria-hidden="true"
+                                        class="font-mono text-[0.6875rem] text-[#827a8b] dark:text-[#9792a5]"
                                     >
-                                        Сохранить ответ
-                                    </BaseButton>
+                                        // условие
+                                    </p>
+                                    <h2
+                                        id="current-question-title"
+                                        class="whitespace-pre-wrap break-words font-sans text-base leading-7"
+                                    >
+                                        {{ currentQuestion.text }}
+                                    </h2>
+                                    <fieldset
+                                        :key="currentQuestion.uuid"
+                                        :disabled="!mutable"
+                                        aria-labelledby="current-question-title"
+                                        class="min-w-0"
+                                    >
+                                        <div
+                                            v-if="currentQuestion.type === 'single_choice'"
+                                            class="divide-y divide-[#dfdae5] border border-[#cec9d5] dark:divide-[#242632] dark:border-[#363845]"
+                                        >
+                                            <label
+                                                v-for="(answer, index) in currentQuestion
+                                                    .public_config.answers"
+                                                :key="answer.uuid"
+                                                class="flex min-w-0 cursor-pointer items-start gap-3 px-3 py-3 font-sans text-sm transition-colors hover:bg-[#ede9f1] dark:hover:bg-[#191b24]"
+                                                :class="
+                                                    selectedAnswerUuid(
+                                                        responses[currentQuestion.uuid],
+                                                    ) === answer.uuid
+                                                        ? 'bg-[#1793d1]/5 shadow-[inset_2px_0_0_#1793d1]'
+                                                        : ''
+                                                "
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    :name="`question-${currentQuestion.uuid}`"
+                                                    :checked="
+                                                        selectedAnswerUuid(
+                                                            responses[currentQuestion.uuid],
+                                                        ) === answer.uuid
+                                                    "
+                                                    class="mt-1 size-4 shrink-0 accent-[#447b9e] dark:accent-[#8eb4d1]"
+                                                    @change="choose(currentQuestion, answer.uuid)"
+                                                />
+                                                <span
+                                                    class="mt-0.5 shrink-0 text-xs text-[#827a8b]"
+                                                >
+                                                    {{ String(index + 1).padStart(2, '0') }}
+                                                </span>
+                                                <span
+                                                    class="min-w-0 whitespace-pre-wrap break-words leading-6"
+                                                >
+                                                    {{ answer.text }}
+                                                </span>
+                                            </label>
+                                        </div>
+                                        <div
+                                            v-else-if="currentQuestion.type === 'text'"
+                                            class="min-w-0 space-y-3"
+                                        >
+                                            <label
+                                                :for="`response-${currentQuestion.uuid}`"
+                                                class="block font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                                            >
+                                                Ваш ответ
+                                            </label>
+                                            <textarea
+                                                :id="`response-${currentQuestion.uuid}`"
+                                                v-model="textDrafts[currentQuestion.uuid]"
+                                                :maxlength="
+                                                    currentQuestion.public_config.max_length
+                                                "
+                                                rows="10"
+                                                class="block w-full min-w-0 resize-y border border-[#cec9d5] bg-[#fcfafd] p-3 font-sans text-sm leading-6 outline-none focus:border-[#1793d1] dark:border-[#363845] dark:bg-[#101219]"
+                                                placeholder="Введите ответ…"
+                                            />
+                                            <div
+                                                class="flex flex-wrap items-center justify-between gap-3"
+                                            >
+                                                <span
+                                                    class="font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                                                >
+                                                    {{
+                                                        (textDrafts[currentQuestion.uuid] ?? '')
+                                                            .length
+                                                    }}
+                                                    / {{ currentQuestion.public_config.max_length }}
+                                                </span>
+                                                <BaseButton
+                                                    :loading="
+                                                        savingQuestion === currentQuestion.uuid
+                                                    "
+                                                    :disabled="
+                                                        !isDirty(currentQuestion) ||
+                                                        !(
+                                                            textDrafts[currentQuestion.uuid] ?? ''
+                                                        ).trim()
+                                                    "
+                                                    loading-text="Сохранение…"
+                                                    @click="saveText(currentQuestion)"
+                                                >
+                                                    Сохранить ответ
+                                                </BaseButton>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                    <p
+                                        aria-live="polite"
+                                        class="font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                                    >
+                                        {{ stateLabels[questionState(currentQuestion)] }}
+                                    </p>
+                                    <AlertMessage
+                                        :message="saveErrors[currentQuestion.uuid] ?? ''"
+                                    />
                                 </div>
+                                <footer
+                                    class="space-y-3 border-t border-[#cec9d5] bg-[#f3f1f6] p-3 dark:border-[#363845] dark:bg-[#191b24]"
+                                >
+                                    <p
+                                        v-if="hasDrafts"
+                                        class="font-mono text-xs text-[#b24d91] dark:text-[#e781bd]"
+                                    >
+                                        Есть несохранённые изменения. Сохраните ответы перед
+                                        завершением.
+                                    </p>
+                                    <div class="flex flex-wrap items-center justify-between gap-3">
+                                        <BaseButton
+                                            :disabled="activeIndex === 0"
+                                            @click="goTo(activeIndex - 1)"
+                                        >
+                                            &lt;-- Назад
+                                        </BaseButton>
+                                        <BaseButton
+                                            v-if="activeIndex < questions.length - 1"
+                                            variant="primary"
+                                            @click="goTo(activeIndex + 1)"
+                                        >
+                                            Далее --&gt;
+                                        </BaseButton>
+                                        <BaseButton
+                                            v-else-if="attempt.status === 'in_progress'"
+                                            variant="primary"
+                                            :loading="busy"
+                                            :disabled="
+                                                !allAnswered || hasDrafts || Boolean(savingQuestion)
+                                            "
+                                            loading-text="Завершение…"
+                                            @click="submit"
+                                        >
+                                            Завершить попытку
+                                        </BaseButton>
+                                    </div>
+                                </footer>
                             </div>
-                            <p
-                                v-if="saveErrors[question.uuid]"
-                                class="border-t border-[#d7a9bf] px-4 py-2 font-mono text-xs text-[#a34a70] dark:border-[#623d53] dark:text-[#f077a8]"
-                            >
-                                {{ saveErrors[question.uuid] }}
-                            </p>
-                        </section>
-                    </fieldset>
-                    <div
-                        v-if="attempt.status === 'in_progress'"
-                        class="flex flex-wrap items-center justify-between gap-3 border border-[#c9c1cf] bg-[#e8e4eb] p-3 dark:border-[#343746] dark:bg-[#181b23]"
-                    >
-                        <span class="font-mono text-xs text-[#68616f] dark:text-[#918da0]">
-                            answered={{ Object.keys(responses).length }}/{{ questions.length }}
-                        </span>
-                        <BaseButton
-                            variant="primary"
-                            :loading="busy"
-                            :disabled="!allAnswered || Boolean(savingQuestion)"
-                            loading-text="Завершение…"
-                            @click="submit"
-                        >
-                            Завершить попытку
-                        </BaseButton>
-                    </div>
+                        </div>
+                    </section>
                 </template>
             </template>
         </div>
     </UserLayout>
 </template>
+
+<style scoped>
+.attempt-workspace {
+    --panel-border: #cec9d5;
+}
+
+/* A restrained terminal palette; keep shared site controls and focus states. */
+:global(.dark) .attempt-workspace {
+    --panel-border: #363845;
+}
+
+.attempt-workspace :deep(button) {
+    border-radius: 0;
+}
+
+.attempt-workspace :deep(textarea) {
+    tab-size: 4;
+    caret-color: #1793d1;
+}
+
+.attempt-workspace section,
+.attempt-workspace aside,
+.attempt-workspace header,
+.attempt-workspace footer {
+    border-color: var(--panel-border);
+}
+</style>

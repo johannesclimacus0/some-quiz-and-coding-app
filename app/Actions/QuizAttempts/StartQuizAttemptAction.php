@@ -44,6 +44,7 @@ final class StartQuizAttemptAction
                 'snapshot' => $snapshot,
                 'started_at' => now(),
                 'total_questions' => count($snapshot['questions']),
+                'max_points' => array_sum(array_column($snapshot['questions'], 'max_points')),
             ]);
 
             return $attempt->load('answers')->setRelation('quiz', $lockedQuiz);

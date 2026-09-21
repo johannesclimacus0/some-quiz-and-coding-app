@@ -9,15 +9,34 @@ class QuizAttemptDetailResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $selected = $this->answers->pluck('response.answer_uuid', 'question_uuid');
+        $answers = $this->answers->keyBy('question_uuid');
 
         return [
             ...new QuizAttemptSummaryResource($this->resource)->toArray($request),
-            'questions' => collect($this->snapshot['questions'])->map(function (array $question) use ($selected): array {
-                $selectedUuid = $selected->get($question['uuid']);
+            'questions' => collect($this->snapshot['questions'])->map(function (array $question) use ($answers): array {
+                $attemptAnswer = $answers->get($question['uuid']);
+
+                if ($question['type'] === 'text') {
+                    return [
+                        'uuid' => $question['uuid'],
+                        'type' => 'text',
+                        'text' => $question['text'],
+                        'position' => $question['position'],
+                        'state' => $attemptAnswer?->grading_status?->value ?? 'empty',
+                        'response' => ['text' => $attemptAnswer?->response['text'] ?? null],
+                        'criteria' => $question['grading_config']['criteria'],
+                        'max_points' => $question['max_points'],
+                        'awarded_points' => $attemptAnswer?->awarded_points,
+                        'feedback' => $attemptAnswer?->feedback,
+                        'grading_version' => $attemptAnswer?->grading_version ?? 0,
+                    ];
+                }
+
+                $selectedUuid = $attemptAnswer?->response['answer_uuid'] ?? null;
 
                 return [
                     'uuid' => $question['uuid'],
+                    'type' => 'single_choice',
                     'text' => $question['text'],
                     'position' => $question['position'],
                     'state' => $selectedUuid === null

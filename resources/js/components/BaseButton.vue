@@ -19,15 +19,16 @@ withDefaults(
 
 <template>
     <button
-        class="inline-flex min-h-8 items-center justify-center gap-2 border px-3 py-1.5 font-mono text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-[#1793d1]/40 disabled:cursor-not-allowed disabled:opacity-40"
+        class="inline-flex min-h-10 items-center justify-center gap-2 border px-3 py-1.5 font-mono text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-[#1793d1]/40 disabled:cursor-not-allowed disabled:opacity-40"
         :class="
             variant === 'primary'
-                ? 'border-[#bdb2c2] bg-[#ddd6e1] text-[#3d3541] hover:border-[#aea2b4] hover:bg-[#d1c7d5] dark:border-[#555765] dark:bg-[#393b47] dark:text-[#ebe7ee] dark:hover:border-[#686b7a] dark:hover:bg-[#474956]'
-                : 'border-[#c9c1cf] bg-[#fbfafd] text-[#27232d] hover:border-[#9990a1] hover:bg-[#eeeaf2] dark:border-[#3b3d4d] dark:bg-[#191b24] dark:text-[#e8e5ef] dark:hover:border-[#626578] dark:hover:bg-[#232631]'
+                ? 'border-[#1793d1] bg-[#1793d1]/10 text-[#447b9e] hover:bg-[#1793d1]/20 dark:text-[#8eb4d1] dark:hover:bg-[#1793d1]/20'
+                : 'border-[#cec9d5] bg-[#fcfafd] text-[#2c2833] hover:border-[#9990a1] hover:bg-[#ede9f1] dark:border-[#363845] dark:bg-[#191b24] dark:text-[#e0dce8] dark:hover:border-[#626578] dark:hover:bg-[#232631]'
         "
         :type="type"
         v-bind="$attrs"
         :disabled="loading || Boolean($attrs.disabled)"
+        :aria-busy="loading"
     >
         <slot v-if="!loading" />
         <template v-else>{{ loadingText }}</template>

@@ -17,10 +17,12 @@ const options: Array<{ value: ThemePreference; label: string }> = [
             v-for="option in options"
             :key="option.value"
             type="button"
-            class="px-1.5 py-0.5 transition-colors hover:text-[#8c4fd6] focus:outline-none dark:hover:text-[#d68adb]"
+            :aria-pressed="preference === option.value"
+            :aria-label="`Тема: ${option.label}`"
+            class="px-1.5 py-0.5 transition-colors hover:text-[#1793d1] dark:hover:text-[#8eb4d1]"
             :class="
                 preference === option.value
-                    ? 'bg-[#e6d9f2] text-[#7137b3] dark:bg-[#382742] dark:text-[#e39aca]'
+                    ? 'bg-[#1793d1]/10 text-[#447b9e] dark:text-[#8eb4d1]'
                     : 'text-[#777080] dark:text-[#85819a]'
             "
         >

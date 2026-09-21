@@ -6,6 +6,51 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@layer base {
+    :root {
+        color-scheme: light;
+    }
+    .dark {
+        color-scheme: dark;
+    }
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: #1793d126;
+    }
+    :where(button, a, input, select, textarea):focus-visible {
+        outline: 2px solid #1793d1;
+        outline-offset: 3px;
+    }
+    :where(button, select):not(:disabled) {
+        cursor: pointer;
+    }
+    button:disabled {
+        cursor: not-allowed;
+    }
+    textarea {
+        caret-color: #1793d1;
+    }
+    @media (pointer: coarse) {
+        button,
+        select,
+        input:not([type='radio']):not([type='checkbox']) {
+            min-height: 44px;
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            scroll-behavior: auto !important;
+            transition-duration: 0s !important;
+        }
+    }
 }

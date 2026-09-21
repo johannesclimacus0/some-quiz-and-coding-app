@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\QuestionType;
 use App\Models\Question;
 use App\Models\Quiz;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreQuestionRequest extends FormRequest
 {
@@ -19,6 +21,8 @@ class StoreQuestionRequest extends FormRequest
         return [
             'text' => 'bail|required|string|max:4096',
             'position' => 'sometimes|bail|integer|between:0,65535',
+            'type' => ['sometimes', 'bail', Rule::enum(QuestionType::class)],
+            'max_points' => 'sometimes|bail|integer|between:1,65535',
         ];
     }
 
@@ -30,6 +34,8 @@ class StoreQuestionRequest extends FormRequest
             'text.max' => 'Текст вопроса не должен превышать 4096 символов',
             'position.integer' => 'Позиция вопроса должна быть целым числом',
             'position.between' => 'Позиция вопроса должна быть от 0 до 65535',
+            'max_points.integer' => 'Максимальный балл должен быть целым числом',
+            'max_points.between' => 'Максимальный балл должен быть от 1 до 65535',
         ];
     }
 }

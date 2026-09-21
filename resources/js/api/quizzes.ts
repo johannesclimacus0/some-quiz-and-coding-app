@@ -11,6 +11,8 @@ export interface Question {
     uuid: string
     text: string
     position: number
+    type: 'single_choice' | 'text'
+    max_points: number
     answers?: Answer[]
 }
 export interface Quiz {
@@ -28,6 +30,10 @@ export interface QuizInput {
 export interface TextInput {
     text: string
     position: number
+}
+export interface QuestionInput extends TextInput {
+    type?: Question['type']
+    max_points?: number
 }
 export type QuizPage = Page<Quiz>
 export interface QuizImportResult {
@@ -61,7 +67,13 @@ export const quizzesApi = {
     async remove({ uuid }: { uuid: string }): Promise<void> {
         await http.delete(`${root}/${uuid}`)
     },
-    async createQuestion({ quiz, input }: { quiz: string; input: TextInput }): Promise<Question> {
+    async createQuestion({
+        quiz,
+        input,
+    }: {
+        quiz: string
+        input: QuestionInput
+    }): Promise<Question> {
         return (await http.post<{ data: Question }>(`${root}/${quiz}/questions`, input)).data.data
     },
     async updateQuestion({
@@ -71,7 +83,7 @@ export const quizzesApi = {
     }: {
         quiz: string
         question: string
-        input: TextInput
+        input: Partial<QuestionInput>
     }): Promise<void> {
         await http.patch(questionPath(quiz, question), input)
     },

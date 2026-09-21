@@ -6,6 +6,7 @@ use App\Data\Admin\Questions\UpdateQuestionData;
 use App\Models\Question;
 use App\Models\Quiz;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class UpdateQuestionAction
 {
@@ -20,9 +21,15 @@ final class UpdateQuestionAction
                 ->lockForUpdate()
                 ->findOrFail($question->getKey());
 
+            if ($data->type !== null && $data->type !== $lockedQuestion->type && $lockedQuiz->attempts()->exists()) {
+                throw ValidationException::withMessages([
+                    'type' => 'Нельзя изменить тип вопроса после начала попыток.',
+                ]);
+            }
+
             $lockedQuestion->update($data->toArray());
 
-            if ($lockedQuestion->wasChanged(['text', 'position'])) {
+            if ($lockedQuestion->wasChanged(['text', 'position', 'type', 'max_points'])) {
                 $lockedQuiz->increment('content_version');
             }
 

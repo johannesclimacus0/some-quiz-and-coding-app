@@ -22,6 +22,12 @@ class QuizAttemptAnswerFactory extends Factory
             'quiz_attempt_id' => QuizAttempt::factory(),
             'question_uuid' => fake()->uuid(),
             'response' => ['answer_uuid' => fake()->uuid()],
+            'awarded_points' => null,
+            'feedback' => null,
+            'graded_by' => null,
+            'graded_at' => null,
+            'grading_version' => 0,
+            'grading_status' => 'not_started',
         ];
     }
 }

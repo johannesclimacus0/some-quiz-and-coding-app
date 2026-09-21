@@ -1,6 +1,6 @@
 import http from './http'
 
-export type AttemptStatus = 'in_progress' | 'completed' | 'expired'
+export type AttemptStatus = 'in_progress' | 'submitted' | 'completed' | 'expired'
 
 export interface AttemptAnswer {
     uuid: string
@@ -32,18 +32,21 @@ export interface TextAttemptQuestion extends BaseAttemptQuestion {
 export type AttemptQuestion = SingleChoiceAttemptQuestion | TextAttemptQuestion
 
 export interface AttemptResult {
-    correct_answers: number
-    total_questions: number
-    percentage: number
-    submitted_at: string
+    earned_points: number | null
+    max_points: number
+    percentage: number | null
+    grading_status: 'pending' | 'graded'
+    graded_at: string | null
 }
 
 export interface SingleChoiceResponse {
     answer_uuid: string
+    feedback?: string | null
 }
 
 export interface TextResponse {
     text: string
+    feedback?: string | null
 }
 
 export type QuestionResponse = SingleChoiceResponse | TextResponse
@@ -93,8 +96,7 @@ export const quizAttemptsApi = {
             })
         ).data.data
     },
-    async submit({ quiz }: { quiz: string }): Promise<AttemptResult> {
-        return (await http.post<{ data: AttemptResult }>(`${root}/${quiz}/attempt/submit`)).data
-            .data
+    async submit({ quiz }: { quiz: string }): Promise<QuizAttempt> {
+        return (await http.post<{ data: QuizAttempt }>(`${root}/${quiz}/attempt/submit`)).data.data
     },
 }

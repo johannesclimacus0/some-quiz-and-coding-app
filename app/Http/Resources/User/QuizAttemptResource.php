@@ -32,12 +32,16 @@ class QuizAttemptResource extends JsonResource
                     ->values()
                     ->all(),
             ],
-            'responses' => (object) $this->answers->pluck('response', 'question_uuid')->all(),
+            'responses' => (object) $this->answers->mapWithKeys(fn ($answer): array => [$answer->question_uuid => [
+                ...$answer->response,
+                'feedback' => $answer->grading_status->value === 'graded' ? $answer->feedback : null,
+            ]])->all(),
             'result' => $this->submitted_at ? [
-                'correct_answers' => $this->correct_answers,
-                'total_questions' => $this->total_questions,
+                'earned_points' => $this->earned_points,
+                'max_points' => $this->max_points,
                 'percentage' => $this->percentage(),
-                'submitted_at' => $this->submitted_at->toISOString(),
+                'grading_status' => $this->grading_status->value,
+                'graded_at' => $this->graded_at?->toISOString(),
             ] : null,
             'started_at' => $this->started_at->toISOString(),
         ];

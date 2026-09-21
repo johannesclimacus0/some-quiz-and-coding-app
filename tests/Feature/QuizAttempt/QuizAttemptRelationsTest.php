@@ -62,12 +62,12 @@ class QuizAttemptRelationsTest extends TestCase
     public function test_percentage_is_calculated_once_and_handles_an_empty_attempt(): void
     {
         $attempt = QuizAttempt::factory()->create([
-            'correct_answers' => 1,
-            'total_questions' => 3,
+            'earned_points' => 1,
+            'max_points' => 3,
         ]);
         $emptyAttempt = QuizAttempt::factory()->create([
-            'correct_answers' => 0,
-            'total_questions' => 0,
+            'earned_points' => 0,
+            'max_points' => 0,
         ]);
 
         $this->assertSame(33, $attempt->percentage());

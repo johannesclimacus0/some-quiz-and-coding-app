@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import http from '../../api/http'
-import { quizzesApi, type Question, type TextInput } from '../../api/quizzes'
+import { quizzesApi, type Question, type QuestionInput, type TextInput } from '../../api/quizzes'
 import AlertMessage from '../AlertMessage.vue'
 import TextItemForm from './TextItemForm.vue'
 import { useApiOperation } from '../../composables/useApiOperation'
@@ -13,6 +13,10 @@ const errorTarget = ref('')
 const editingAnswer = ref<string | null>(null)
 const addingAnswer = ref(false)
 const answerFormKey = ref(0)
+const settings = reactive<{ type: Question['type']; max_points: number }>({
+    type: props.question.type,
+    max_points: props.question.max_points,
+})
 const answers = computed(() => props.question.answers ?? [])
 const nextAnswerPosition = computed(
     () => Math.max(-1, ...answers.value.map((answer) => answer.position)) + 1,
@@ -23,6 +27,8 @@ watch(
     () => {
         editingAnswer.value = null
         addingAnswer.value = false
+        settings.type = props.question.type
+        settings.max_points = props.question.max_points
     },
 )
 
@@ -42,9 +48,32 @@ async function mutate(target: string, operation: () => Promise<void>): Promise<b
     })
 }
 
-function saveQuestion(input: TextInput) {
+function saveQuestion(input: QuestionInput) {
     return mutate('question', () =>
         quizzesApi.updateQuestion({ quiz: props.quizUuid, question: props.question.uuid, input }),
+    )
+}
+
+async function saveType(): Promise<void> {
+    const previousType = props.question.type
+    const saved = await mutate('question-settings', () =>
+        quizzesApi.updateQuestion({
+            quiz: props.quizUuid,
+            question: props.question.uuid,
+            input: { type: settings.type },
+        }),
+    )
+    if (!saved) settings.type = previousType
+}
+
+async function savePoints(): Promise<void> {
+    if (busy.value || settings.max_points === props.question.max_points) return
+    await mutate('question-settings', () =>
+        quizzesApi.updateQuestion({
+            quiz: props.quizUuid,
+            question: props.question.uuid,
+            input: { max_points: settings.max_points },
+        }),
     )
 }
 
@@ -102,16 +131,16 @@ function removeAnswer(uuid: string) {
         class="min-w-0"
     >
         <header
-            class="flex flex-wrap items-start justify-between gap-3 border-b border-[#d8d1dc] px-4 py-3 dark:border-[#343746]"
+            class="flex flex-wrap items-start justify-between gap-3 border-b border-[#cec9d5] px-4 py-3 dark:border-[#363845]"
         >
             <div class="font-mono">
                 <p
-                    class="text-[0.625rem] uppercase tracking-[0.12em] text-[#96909e] dark:text-[#656879]"
+                    class="text-[0.625rem] uppercase tracking-[0.12em] text-[#827a8b] dark:text-[#9792a5]"
                 >
                     запись вопроса
                 </p>
-                <p class="mt-1 text-xs text-[#68616f] dark:text-[#918da0]">
-                    позиция={{ question.position }} · ответов={{ answers.length }}
+                <p class="mt-1 text-xs text-[#686171] dark:text-[#9792a5]">
+                    позиция={{ question.position }} · баллов={{ question.max_points }}
                 </p>
             </div>
             <button
@@ -134,9 +163,52 @@ function removeAnswer(uuid: string) {
                 submit-label="Сохранить вопрос"
                 @save="saveQuestion"
             />
-            <section class="border border-[#d8d1dc] dark:border-[#343746]">
+            <section
+                class="grid gap-3 border border-[#cec9d5] p-3 dark:border-[#363845] sm:grid-cols-[minmax(0,1fr)_10rem]"
+            >
+                <label class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]">
+                    <span>Тип вопроса</span>
+                    <select
+                        v-model="settings.type"
+                        @change="saveType"
+                        class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                    >
+                        <option value="single_choice">Один вариант</option>
+                        <option value="text">Текстовый ответ</option>
+                    </select>
+                </label>
+                <label class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]">
+                    <span>Максимальный балл</span>
+                    <input
+                        v-model.number="settings.max_points"
+                        type="number"
+                        min="1"
+                        max="65535"
+                        step="1"
+                        class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                        @blur="savePoints"
+                        @keydown.enter.prevent="savePoints"
+                    />
+                    <span
+                        v-if="errorTarget === 'question-settings' && errors.max_points"
+                        class="block text-[#b24d91] dark:text-[#e781bd]"
+                    >
+                        {{ errors.max_points[0] }}
+                    </span>
+                </label>
+                <p
+                    v-if="errorTarget === 'question-settings' && errors.type"
+                    class="font-mono text-xs text-[#b24d91] sm:col-span-2 dark:text-[#e781bd]"
+                >
+                    {{ errors.type[0] }}
+                </p>
+            </section>
+            <section
+                v-if="question.type === 'single_choice'"
+                class="border border-[#cec9d5] dark:border-[#363845]"
+            >
                 <header
-                    class="flex items-center justify-between border-b border-[#d8d1dc] bg-[#f2eff5] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#15171e]"
+                    class="flex items-center justify-between border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                 >
                     <span>
                         <span class="text-[#1793d1]">::</span>
@@ -144,7 +216,7 @@ function removeAnswer(uuid: string) {
                     </span>
                     <button
                         type="button"
-                        class="text-[#557789] hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                        class="text-[#447b9e] hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                         @click="addingAnswer = !addingAnswer"
                     >
                         {{ addingAnswer ? '[ закрыть ]' : '[ + ответ ]' }}
@@ -152,26 +224,27 @@ function removeAnswer(uuid: string) {
                 </header>
                 <p
                     v-if="!answers.length"
-                    class="p-4 font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                    class="p-4 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                 >
                     0 ответов · добавьте хотя бы одну запись
                 </p>
                 <ul
                     v-else
-                    class="divide-y divide-[#e0dae4] dark:divide-[#292c36]"
+                    class="divide-y divide-[#dfdae5] dark:divide-[#242632]"
                 >
                     <li
                         v-for="(answer, index) in answers"
                         :key="answer.uuid"
                     >
                         <div
-                            class="grid grid-cols-[1.5rem_2.5rem_minmax(0,1fr)_3.5rem_auto] items-center gap-2 px-3 py-2.5 font-mono text-xs"
+                            class="grid grid-cols-[1.5rem_2.5rem_minmax(0,1fr)] items-center gap-2 px-3 py-2.5 font-mono text-xs xl:grid-cols-[1.5rem_2.5rem_minmax(0,1fr)_3.5rem_auto]"
                         >
                             <input
                                 type="radio"
                                 :name="'correct-' + question.uuid"
                                 :checked="answer.is_correct"
-                                class="size-3.5 accent-[#557789] dark:accent-[#8ca8b7]"
+                                :aria-label="`Отметить правильным: ${answer.text}`"
+                                class="size-3.5 accent-[#447b9e] dark:accent-[#8eb4d1]"
                                 @change="
                                     mutate(answer.uuid, () =>
                                         quizzesApi.setCorrect({
@@ -182,7 +255,7 @@ function removeAnswer(uuid: string) {
                                     )
                                 "
                             />
-                            <span class="text-[0.625rem] text-[#96909e] dark:text-[#656879]">
+                            <span class="text-[0.625rem] text-[#827a8b] dark:text-[#9792a5]">
                                 A{{ String(index + 1).padStart(2, '0') }}
                             </span>
                             <span
@@ -191,13 +264,13 @@ function removeAnswer(uuid: string) {
                             >
                                 {{ answer.text }}
                             </span>
-                            <span class="text-[0.625rem] text-[#96909e] dark:text-[#656879]">
+                            <span class="text-[0.625rem] text-[#827a8b] dark:text-[#9792a5]">
                                 p={{ answer.position }}
                             </span>
-                            <div class="flex gap-3">
+                            <div class="col-span-2 flex flex-wrap gap-3 xl:col-span-1">
                                 <button
                                     type="button"
-                                    class="text-[#557789] hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                                    class="text-[#447b9e] hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                                     @click="
                                         editingAnswer =
                                             editingAnswer === answer.uuid ? null : answer.uuid
@@ -216,7 +289,7 @@ function removeAnswer(uuid: string) {
                         </div>
                         <div
                             v-if="editingAnswer === answer.uuid"
-                            class="border-t border-dashed border-[#d8d1dc] bg-[#f7f5f8] p-3 dark:border-[#343746] dark:bg-[#13151c]"
+                            class="border-t border-dashed border-[#cec9d5] bg-[#f3f1f6] p-3 dark:border-[#363845] dark:bg-[#101219]"
                         >
                             <TextItemForm
                                 :id="'answer-' + answer.uuid"
@@ -232,7 +305,7 @@ function removeAnswer(uuid: string) {
                 </ul>
                 <div
                     v-if="addingAnswer"
-                    class="border-t border-dashed border-[#d8d1dc] bg-[#f7f5f8] p-3 dark:border-[#343746] dark:bg-[#13151c]"
+                    class="border-t border-dashed border-[#cec9d5] bg-[#f3f1f6] p-3 dark:border-[#363845] dark:bg-[#101219]"
                 >
                     <TextItemForm
                         :key="answerFormKey"
@@ -248,7 +321,11 @@ function removeAnswer(uuid: string) {
                 </div>
             </section>
             <p
-                v-if="answers.length && !answers.some((answer) => answer.is_correct)"
+                v-if="
+                    question.type === 'single_choice' &&
+                    answers.length &&
+                    !answers.some((answer) => answer.is_correct)
+                "
                 class="font-mono text-xs text-[#b24d91] dark:text-[#e781bd]"
             >
                 предупреждение: правильный ответ не выбран

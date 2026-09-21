@@ -80,14 +80,14 @@ onMounted(() => load())
         <div class="space-y-4">
             <AlertMessage :message="error" />
             <section
-                class="overflow-hidden border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                class="overflow-hidden border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
             >
                 <header
-                    class="flex flex-wrap items-center justify-between gap-3 border-b border-[#c9c1cf] bg-[#e8e4eb] px-3 py-2 dark:border-[#343746] dark:bg-[#181b23]"
+                    class="flex flex-wrap items-center justify-between gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 dark:border-[#363845] dark:bg-[#191b24]"
                 >
                     <div class="flex items-center font-mono text-xs">
                         <span class="text-[#1793d1]">db</span>
-                        <span class="text-[#96909e] dark:text-[#656879]">/</span>
+                        <span class="text-[#827a8b] dark:text-[#9792a5]">/</span>
                         <span>quizzes.index</span>
                         <span
                             v-if="busy"
@@ -100,14 +100,14 @@ onMounted(() => load())
                         <button
                             @click="toggleImport"
                             type="button"
-                            class="font-mono text-xs text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                            class="font-mono text-xs text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                         >
                             {{ importing ? '[ закрыть импорт ]' : '[ импорт ]' }}
                         </button>
                         <button
                             @click="toggleCreate"
                             type="button"
-                            class="font-mono text-xs text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                            class="font-mono text-xs text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                         >
                             {{ creating ? '[ закрыть ]' : '[ + новый квиз ]' }}
                         </button>
@@ -115,10 +115,10 @@ onMounted(() => load())
                 </header>
                 <div
                     v-if="creating"
-                    class="border-b border-[#c9c1cf] bg-[#f4f1f6] dark:border-[#343746] dark:bg-[#15171e]"
+                    class="border-b border-[#cec9d5] bg-[#f4f1f6] dark:border-[#363845] dark:bg-[#191b24]"
                 >
                     <div
-                        class="border-b border-dashed border-[#d8d1dc] px-4 py-2 font-mono text-[0.6875rem] text-[#96909e] dark:border-[#343746] dark:text-[#656879]"
+                        class="border-b border-dashed border-[#cec9d5] px-4 py-2 font-mono text-[0.6875rem] text-[#827a8b] dark:border-[#363845] dark:text-[#9792a5]"
                     >
                         INSERT INTO quizzes
                     </div>
@@ -130,10 +130,10 @@ onMounted(() => load())
                 </div>
                 <div
                     v-if="importing"
-                    class="border-b border-[#c9c1cf] bg-[#f4f1f6] dark:border-[#343746] dark:bg-[#15171e]"
+                    class="border-b border-[#cec9d5] bg-[#f4f1f6] dark:border-[#363845] dark:bg-[#191b24]"
                 >
                     <div
-                        class="border-b border-dashed border-[#d8d1dc] px-4 py-2 font-mono text-[0.6875rem] text-[#96909e] dark:border-[#343746] dark:text-[#656879]"
+                        class="border-b border-dashed border-[#cec9d5] px-4 py-2 font-mono text-[0.6875rem] text-[#827a8b] dark:border-[#363845] dark:text-[#9792a5]"
                     >
                         COPY quizzes FROM file
                     </div>
@@ -146,7 +146,7 @@ onMounted(() => load())
                             class="flex flex-wrap items-end gap-3"
                         >
                             <label
-                                class="min-w-0 flex-1 basis-72 space-y-2 font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                                class="min-w-0 flex-1 basis-72 space-y-2 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                             >
                                 <span class="block">JSON или Markdown · максимум 2 МБ</span>
                                 <input
@@ -154,7 +154,7 @@ onMounted(() => load())
                                     :key="importInputKey"
                                     type="file"
                                     accept=".json,.md,.markdown,application/json,text/markdown,text/plain"
-                                    class="block w-full border border-[#c9c1cf] bg-[#fbfafd] px-2.5 py-2 text-xs file:mr-3 file:border-0 file:bg-transparent file:font-mono file:text-[#557789] dark:border-[#3b3d4d] dark:bg-[#11131a] dark:file:text-[#8ca8b7]"
+                                    class="block w-full border border-[#cec9d5] bg-[#fcfafd] px-2.5 py-2 text-xs file:mr-3 file:border-0 file:bg-transparent file:font-mono file:text-[#447b9e] dark:border-[#363845] dark:bg-[#101219] dark:file:text-[#8eb4d1]"
                                 />
                             </label>
                             <BaseButton
@@ -178,7 +178,7 @@ onMounted(() => load())
                                     v-for="message in messages"
                                     :key="message"
                                 >
-                                    <span class="text-[#96909e] dark:text-[#656879]">
+                                    <span class="text-[#827a8b] dark:text-[#9792a5]">
                                         {{ field }}:
                                     </span>
                                     {{ message }}
@@ -187,7 +187,7 @@ onMounted(() => load())
                         </ul>
                         <p
                             v-if="importResult"
-                            class="font-mono text-xs text-[#557789] dark:text-[#8ca8b7]"
+                            class="font-mono text-xs text-[#447b9e] dark:text-[#8eb4d1]"
                         >
                             импорт завершён · квизов: {{ importResult.quizzes }} · вопросов:
                             {{ importResult.questions }} · ответов: {{ importResult.answers }}
@@ -195,7 +195,7 @@ onMounted(() => load())
                     </form>
                 </div>
                 <div
-                    class="hidden grid-cols-[7rem_minmax(12rem,1fr)_11rem_8rem_3rem] gap-3 border-b border-[#d8d1dc] bg-[#f2eff5] px-3 py-2 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-[#96909e] dark:border-[#343746] dark:bg-[#15171e] dark:text-[#656879] md:grid"
+                    class="hidden grid-cols-[7rem_minmax(12rem,1fr)_11rem_8rem_3rem] gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-[#827a8b] dark:border-[#363845] dark:bg-[#191b24] dark:text-[#9792a5] xl:grid"
                 >
                     <span>id</span>
                     <span>название</span>
@@ -205,31 +205,31 @@ onMounted(() => load())
                 </div>
                 <p
                     v-if="busy && !page"
-                    class="px-4 py-8 text-center font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                    class="px-4 py-8 text-center font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                 >
                     запрос выполняется...
                 </p>
                 <p
                     v-else-if="page && !page.data.length"
-                    class="px-4 py-8 text-center font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                    class="px-4 py-8 text-center font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                 >
                     запрос вернул 0 строк
                 </p>
-                <ul class="divide-y divide-[#e0dae4] dark:divide-[#292c36]">
+                <ul class="divide-y divide-[#dfdae5] dark:divide-[#242632]">
                     <li
                         v-for="quiz in page?.data"
                         :key="quiz.uuid"
                     >
                         <RouterLink
                             :to="{ name: 'admin.quizzes.edit', params: { quiz: quiz.uuid } }"
-                            class="group grid gap-1.5 px-3 py-3 transition-colors hover:bg-[#eeeaf2] dark:hover:bg-[#1b1e27] md:grid-cols-[7rem_minmax(12rem,1fr)_11rem_8rem_3rem] md:items-center md:gap-3 md:py-2.5"
+                            class="group grid gap-1.5 px-3 py-3 transition-colors hover:bg-[#ede9f1] dark:hover:bg-[#191b24] xl:grid-cols-[7rem_minmax(12rem,1fr)_11rem_8rem_3rem] xl:items-center xl:gap-3 xl:py-2.5"
                         >
-                            <code class="text-[0.6875rem] text-[#96909e] dark:text-[#656879]">
+                            <code class="text-[0.6875rem] text-[#827a8b] dark:text-[#9792a5]">
                                 {{ quiz.uuid.slice(0, 16) }}
                             </code>
                             <span class="min-w-0 truncate font-mono text-sm">{{ quiz.title }}</span>
                             <time
-                                class="font-mono text-[0.6875rem] text-[#68616f] dark:text-[#918da0]"
+                                class="font-mono text-[0.6875rem] text-[#686171] dark:text-[#9792a5]"
                             >
                                 {{ formatDate(quiz.due_at) }}
                             </time>
@@ -238,7 +238,7 @@ onMounted(() => load())
                                 :class="
                                     state(quiz.due_at) === 'expired'
                                         ? 'text-[#b24d91] dark:text-[#e781bd]'
-                                        : 'text-[#557789] dark:text-[#8ca8b7]'
+                                        : 'text-[#447b9e] dark:text-[#8eb4d1]'
                                 "
                             >
                                 {{ state(quiz.due_at) }}

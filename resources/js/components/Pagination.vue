@@ -49,12 +49,13 @@ function number(page: number): string {
 <template>
     <nav
         v-if="lastPage > 1"
-        class="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 border-t border-[#c9c1cf] bg-[#eeeaf2] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#151820]"
+        aria-label="Страницы списка"
+        class="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 border-t border-[#cec9d5] bg-[#ede9f1] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#151820]"
     >
-        <span class="mr-auto text-[#96909e] dark:text-[#656879]">{{ label }}</span>
+        <span class="mr-auto text-[#827a8b] dark:text-[#9792a5]">{{ label }}</span>
         <button
             type="button"
-            class="text-[#557789] transition-colors hover:text-[#287da8] disabled:text-[#aaa4af] dark:text-[#8ca8b7] dark:hover:text-[#65b7df] dark:disabled:text-[#505362]"
+            class="min-h-10 px-1 text-[#447b9e] transition-colors hover:text-[#287da8] disabled:text-[#aaa4af] dark:text-[#8eb4d1] dark:hover:text-[#65b7df] dark:disabled:text-[#505362]"
             :disabled="loading || currentPage === 1"
             @click="change(currentPage - 1)"
         >
@@ -67,7 +68,7 @@ function number(page: number): string {
         >
             <span
                 v-if="page === null"
-                class="text-[#96909e] dark:text-[#656879]"
+                class="text-[#827a8b] dark:text-[#9792a5]"
             >
                 ··
             </span>
@@ -75,11 +76,13 @@ function number(page: number): string {
                 @click="change(page)"
                 v-else
                 type="button"
-                class="px-1 py-0.5 transition-colors"
+                class="min-h-10 min-w-10 px-2 py-1 transition-colors"
+                :aria-current="page === currentPage ? 'page' : undefined"
+                :aria-label="`Страница ${page}`"
                 :class="
                     page === currentPage
-                        ? 'bg-[#d9d2dd] text-[#27232d] dark:bg-[#343746] dark:text-[#f0edf3]'
-                        : 'text-[#777080] hover:text-[#287da8] dark:text-[#918da0] dark:hover:text-[#65b7df]'
+                        ? 'bg-[#d9d2dd] text-[#2c2833] dark:bg-[#363845] dark:text-[#f0edf3]'
+                        : 'text-[#777080] hover:text-[#287da8] dark:text-[#9792a5] dark:hover:text-[#65b7df]'
                 "
                 :disabled="loading"
             >
@@ -90,10 +93,10 @@ function number(page: number): string {
         <button
             @click="change(currentPage + 1)"
             type="button"
-            class="text-[#557789] transition-colors hover:text-[#287da8] disabled:text-[#aaa4af] dark:text-[#8ca8b7] dark:hover:text-[#65b7df] dark:disabled:text-[#505362]"
+            class="min-h-10 px-1 text-[#447b9e] transition-colors hover:text-[#287da8] disabled:text-[#aaa4af] dark:text-[#8eb4d1] dark:hover:text-[#65b7df] dark:disabled:text-[#505362]"
             :disabled="loading || currentPage === lastPage"
         >
-            вперед -->;
+            вперёд --&gt;
         </button>
     </nav>
 </template>

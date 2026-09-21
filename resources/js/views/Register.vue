@@ -111,7 +111,7 @@ const submit = async function (): Promise<void> {
         <template #footer>
             <RouterLink
                 :to="{ name: 'login' }"
-                class="text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                class="text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
             >
                 Уже есть аккаунт? Войти
             </RouterLink>

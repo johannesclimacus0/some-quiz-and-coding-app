@@ -51,7 +51,7 @@ use Illuminate\Support\Carbon;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['text', 'position'])]
+#[Fillable(['text', 'position', 'type', 'max_points'])]
 class Question extends Model
 {
     /** @use HasFactory<QuestionFactory> */

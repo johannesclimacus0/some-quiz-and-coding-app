@@ -87,7 +87,7 @@ const submit = async (): Promise<void> => {
                 required
             />
             <label
-                class="flex items-center gap-2 font-mono text-xs font-medium text-[#68616f] dark:text-[#918da0]"
+                class="flex items-center gap-2 font-mono text-xs font-medium text-[#686171] dark:text-[#9792a5]"
             >
                 <input
                     v-model="formData.remember"
@@ -109,7 +109,7 @@ const submit = async (): Promise<void> => {
         <template #footer>
             <RouterLink
                 :to="{ name: 'register' }"
-                class="text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                class="text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
             >
                 Создать аккаунт
             </RouterLink>

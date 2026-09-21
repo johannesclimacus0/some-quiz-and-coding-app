@@ -50,7 +50,7 @@ function submit() {
             <div class="space-y-2">
                 <label
                     for="quiz-description"
-                    class="block font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                    class="block font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                 >
                     Описание
                 </label>
@@ -59,7 +59,7 @@ function submit() {
                     v-model="form.description"
                     rows="3"
                     maxlength="4096"
-                    class="w-full rounded-sm border border-[#c9c1cf] bg-[#fbfafd] p-2.5 font-mono text-xs outline-none focus:border-[#1793d1] dark:border-[#3b3d4d] dark:bg-[#11131a]"
+                    class="w-full border border-[#cec9d5] bg-[#fcfafd] p-2.5 font-mono text-xs outline-none focus:border-[#1793d1] dark:border-[#363845] dark:bg-[#101219]"
                 />
                 <p
                     v-if="errors.description"

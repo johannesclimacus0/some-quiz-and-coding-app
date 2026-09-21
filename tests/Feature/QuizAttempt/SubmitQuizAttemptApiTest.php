@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\QuizAttempt;
 
+use App\Enums\QuestionType;
 use App\Models\Answer;
 use App\Models\Group;
 use App\Models\Question;
@@ -42,9 +43,10 @@ class SubmitQuizAttemptApiTest extends TestCase
 
         $response = $this->postJson($base . '/submit')
             ->assertOk()
-            ->assertJsonPath('data.correct_answers', 1)
-            ->assertJsonPath('data.total_questions', 2)
-            ->assertJsonPath('data.percentage', 50);
+            ->assertJsonPath('data.status', 'completed')
+            ->assertJsonPath('data.result.earned_points', 1)
+            ->assertJsonPath('data.result.max_points', 2)
+            ->assertJsonPath('data.result.percentage', 50);
         $this->assertStringNotContainsString('correct_answer_uuid', $response->getContent());
         $this->assertStringNotContainsString('grading_config', $response->getContent());
         $this->postJson($base . '/submit')->assertConflict();
@@ -65,6 +67,32 @@ class SubmitQuizAttemptApiTest extends TestCase
         $quiz->update(['due_at' => null]);
         $group->users()->detach($user);
         $this->postJson($base . '/submit')->assertForbidden();
+    }
+
+    public function test_text_answers_wait_for_manual_grading_after_submission(): void
+    {
+        [$user, $quiz] = $this->assignedReadyQuiz();
+        Question::factory()->for($quiz)->create([
+            'type' => QuestionType::Text,
+            'max_points' => 4,
+            'position' => 2,
+        ]);
+        $base = '/api/quizzes/' . $quiz->uuid . '/attempt';
+        $attempt = $this->actingAs($user)->postJson($base)->json('data');
+
+        foreach ($attempt['snapshot']['questions'] as $question) {
+            $response = $question['type'] === 'text'
+                ? ['text' => 'Текстовый ответ']
+                : ['answer_uuid' => $question['public_config']['answers'][0]['uuid']];
+            $this->putJson($base . '/answers/' . $question['uuid'], compact('response'))->assertOk();
+        }
+
+        $this->postJson($base . '/submit')
+            ->assertOk()
+            ->assertJsonPath('data.status', 'submitted')
+            ->assertJsonPath('data.result.earned_points', null)
+            ->assertJsonPath('data.result.max_points', 6)
+            ->assertJsonPath('data.result.grading_status', 'pending');
     }
 
     private function assignedReadyQuiz(): array

@@ -18,7 +18,7 @@ const { scale, minimum, maximum, decrease, increase, reset } = useFontScale()
         <button
             @click="reset"
             type="button"
-            class="min-w-11 px-1 py-0.5 text-center tabular-nums text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+            class="min-w-11 px-1 py-0.5 text-center tabular-nums text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
         >
             {{ scale }}%
         </button>
