@@ -10,6 +10,7 @@ import {
 } from '../api/quizAttempts'
 import AlertMessage from '../components/AlertMessage.vue'
 import BaseButton from '../components/BaseButton.vue'
+import CodeEditor from '../components/CodeEditor.vue'
 import { useApiOperation } from '../composables/useApiOperation'
 import UserLayout from '../layouts/UserLayout.vue'
 
@@ -94,17 +95,29 @@ async function saveText(question: AttemptQuestion): Promise<void> {
     await saveResponse(question, { text: textDrafts.value[question.uuid] ?? '' })
 }
 
+async function saveCode(question: AttemptQuestion): Promise<void> {
+    await saveResponse(question, { code: textDrafts.value[question.uuid] ?? '' })
+}
+
 function restoreResponses(next: Record<string, QuestionResponse>): void {
     responses.value = { ...next }
     textDrafts.value = Object.fromEntries(
         Object.entries(next).flatMap(([questionUuid, response]) =>
-            'text' in response ? [[questionUuid, response.text]] : [],
+            'text' in response
+                ? [[questionUuid, response.text]]
+                : 'code' in response
+                  ? [[questionUuid, response.code]]
+                  : [],
         ),
     )
 }
 
 function isResponseComplete(response: QuestionResponse | undefined): boolean {
-    return Boolean(selectedAnswerUuid(response)) || responseText(response).trim() !== ''
+    return (
+        Boolean(selectedAnswerUuid(response)) ||
+        responseText(response).trim() !== '' ||
+        responseCode(response).trim() !== ''
+    )
 }
 
 function selectedAnswerUuid(response: QuestionResponse | undefined): string | undefined {
@@ -115,10 +128,21 @@ function responseText(response: QuestionResponse | undefined): string {
     return response && 'text' in response ? response.text : ''
 }
 
+function responseCode(response: QuestionResponse | undefined): string {
+    return response && 'code' in response ? response.code : ''
+}
+
+function responseAwardedPoints(response: QuestionResponse | undefined): number | null {
+    return response?.awarded_points ?? null
+}
+
 function isDirty(question: AttemptQuestion): boolean {
     return (
-        question.type === 'text' &&
-        (textDrafts.value[question.uuid] ?? '') !== responseText(responses.value[question.uuid])
+        (question.type === 'text' || question.type === 'code') &&
+        (textDrafts.value[question.uuid] ?? '') !==
+            (question.type === 'code'
+                ? responseCode(responses.value[question.uuid])
+                : responseText(responses.value[question.uuid]))
     )
 }
 
@@ -254,7 +278,7 @@ watch(
                 >
                     <p class="font-mono text-lg">Ожидает проверки</p>
                     <p class="mt-2 text-sm text-[#686171] dark:text-[#9792a5]">
-                        Администратор проверит текстовые ответы и опубликует итог.
+                        Администратор проверит ответы с ручной оценкой и опубликует итог.
                     </p>
                 </section>
                 <section
@@ -282,26 +306,31 @@ watch(
                         </div>
                     </div>
                     <div
-                        v-if="questions.some((question) => responseText(responses[question.uuid]))"
+                        v-if="
+                            questions.some((question) => ['text', 'code'].includes(question.type))
+                        "
                         class="space-y-2 border-t border-[#cec9d5] p-4 text-sm dark:border-[#363845]"
                     >
-                        <template
+                        <article
                             v-for="question in questions"
                             :key="question.uuid"
+                            v-show="question.type === 'text' || question.type === 'code'"
+                            class="border border-[#cec9d5] p-3 dark:border-[#363845]"
                         >
-                            <p
-                                v-if="
-                                    responseText(responses[question.uuid]) &&
-                                    responses[question.uuid].feedback
-                                "
-                                class="border border-[#cec9d5] p-3 dark:border-[#363845]"
-                            >
-                                <span class="font-mono text-xs">
-                                    Комментарий к «{{ question.text }}»:
+                            <header class="flex flex-wrap items-start justify-between gap-2">
+                                <span class="font-mono text-xs">{{ question.text }}</span>
+                                <span class="font-mono text-xs text-[#447b9e] dark:text-[#8eb4d1]">
+                                    {{ responseAwardedPoints(responses[question.uuid]) }} /
+                                    {{ question.max_points }}
                                 </span>
+                            </header>
+                            <p
+                                v-if="responses[question.uuid].feedback"
+                                class="mt-2 text-[#5f5866] dark:text-[#b7b2c2]"
+                            >
                                 {{ responses[question.uuid].feedback }}
                             </p>
-                        </template>
+                        </article>
                     </div>
                 </section>
                 <template v-else>
@@ -364,9 +393,11 @@ watch(
                                                     {{ String(index + 1).padStart(2, '0') }}_
                                                 </span>
                                                 {{
-                                                    item.type === 'text'
-                                                        ? 'response.txt'
-                                                        : 'choice.quiz'
+                                                    item.type === 'code'
+                                                        ? 'solution.code'
+                                                        : item.type === 'text'
+                                                          ? 'response.txt'
+                                                          : 'choice.quiz'
                                                 }}
                                             </span>
                                             <span class="mt-1 block truncate text-[0.6875rem]">
@@ -414,9 +445,11 @@ watch(
                                         Вопрос {{ activeIndex + 1 }} / {{ questions.length }}
                                         <span class="text-[#827a8b]">·</span>
                                         {{
-                                            currentQuestion.type === 'text'
-                                                ? 'Текстовый ответ'
-                                                : 'Один вариант'
+                                            currentQuestion.type === 'code'
+                                                ? 'Код'
+                                                : currentQuestion.type === 'text'
+                                                  ? 'Текстовый ответ'
+                                                  : 'Один вариант'
                                         }}
                                     </span>
                                     <span class="text-[#686171] dark:text-[#9792a5]">
@@ -483,17 +516,39 @@ watch(
                                             </label>
                                         </div>
                                         <div
-                                            v-else-if="currentQuestion.type === 'text'"
+                                            v-else-if="
+                                                currentQuestion.type === 'text' ||
+                                                currentQuestion.type === 'code'
+                                            "
                                             class="min-w-0 space-y-3"
                                         >
-                                            <label
-                                                :for="`response-${currentQuestion.uuid}`"
+                                            <p
                                                 class="block font-mono text-xs text-[#686171] dark:text-[#9792a5]"
                                             >
-                                                Ваш ответ
-                                            </label>
+                                                {{
+                                                    currentQuestion.type === 'code'
+                                                        ? `${currentQuestion.public_config.label} · solution.${currentQuestion.public_config.file_extension}`
+                                                        : 'Ваш ответ'
+                                                }}
+                                            </p>
+                                            <CodeEditor
+                                                v-if="currentQuestion.type === 'code'"
+                                                v-model="textDrafts[currentQuestion.uuid]"
+                                                :language="currentQuestion.public_config.editor_id"
+                                                :max-length="
+                                                    currentQuestion.public_config.max_length
+                                                "
+                                                :readonly="
+                                                    attempt.status !== 'in_progress' ||
+                                                    deadlineExpired ||
+                                                    busy
+                                                "
+                                                height="26rem"
+                                            />
                                             <textarea
+                                                v-else
                                                 :id="`response-${currentQuestion.uuid}`"
+                                                aria-label="Ваш ответ"
                                                 v-model="textDrafts[currentQuestion.uuid]"
                                                 :maxlength="
                                                     currentQuestion.public_config.max_length
@@ -525,7 +580,11 @@ watch(
                                                         ).trim()
                                                     "
                                                     loading-text="Сохранение…"
-                                                    @click="saveText(currentQuestion)"
+                                                    @click="
+                                                        currentQuestion.type === 'code'
+                                                            ? saveCode(currentQuestion)
+                                                            : saveText(currentQuestion)
+                                                    "
                                                 >
                                                     Сохранить ответ
                                                 </BaseButton>

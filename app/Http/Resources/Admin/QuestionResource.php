@@ -19,6 +19,7 @@ class QuestionResource extends JsonResource
             'text' => $this->text,
             'position' => (int) $this->position,
             'type' => $this->type->value,
+            'programming_language' => $this->programming_language?->value,
             'max_points' => (int) $this->max_points,
             'answers' => AnswerResource::collection($this->whenLoaded('answers')),
             'created_at' => $this->created_at?->toISOString(),

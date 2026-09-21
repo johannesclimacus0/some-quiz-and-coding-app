@@ -1,4 +1,5 @@
 import http from './http'
+import type { ProgrammingLanguage } from './quizzes'
 
 export type AttemptStatus = 'in_progress' | 'submitted' | 'completed' | 'expired'
 
@@ -29,7 +30,19 @@ export interface TextAttemptQuestion extends BaseAttemptQuestion {
     }
 }
 
-export type AttemptQuestion = SingleChoiceAttemptQuestion | TextAttemptQuestion
+export interface CodeAttemptQuestion extends BaseAttemptQuestion {
+    type: 'code'
+    public_config: {
+        language: ProgrammingLanguage
+        label: string
+        editor_id: string
+        file_extension: string
+        max_length: number
+    }
+}
+
+export type AttemptQuestion =
+    SingleChoiceAttemptQuestion | TextAttemptQuestion | CodeAttemptQuestion
 
 export interface AttemptResult {
     earned_points: number | null
@@ -41,15 +54,23 @@ export interface AttemptResult {
 
 export interface SingleChoiceResponse {
     answer_uuid: string
+    awarded_points?: number | null
     feedback?: string | null
 }
 
 export interface TextResponse {
     text: string
+    awarded_points?: number | null
     feedback?: string | null
 }
 
-export type QuestionResponse = SingleChoiceResponse | TextResponse
+export interface CodeResponse {
+    code: string
+    awarded_points?: number | null
+    feedback?: string | null
+}
+
+export type QuestionResponse = SingleChoiceResponse | TextResponse | CodeResponse
 
 export interface QuizAttempt {
     uuid: string

@@ -7,11 +7,13 @@ export interface Answer {
     position: number
     is_correct: boolean
 }
+export type ProgrammingLanguage = 'cpp' | 'sql' | 'java'
 export interface Question {
     uuid: string
     text: string
     position: number
-    type: 'single_choice' | 'text'
+    type: 'single_choice' | 'text' | 'code'
+    programming_language: ProgrammingLanguage | null
     max_points: number
     answers?: Answer[]
 }
@@ -33,6 +35,7 @@ export interface TextInput {
 }
 export interface QuestionInput extends TextInput {
     type?: Question['type']
+    programming_language?: ProgrammingLanguage
     max_points?: number
 }
 export type QuizPage = Page<Quiz>

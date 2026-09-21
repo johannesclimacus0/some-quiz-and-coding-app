@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\HasUuidRouteKey;
+use App\Enums\ProgrammingLanguage;
 use App\Enums\QuestionType;
 use Database\Factories\QuestionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -21,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string $text
  * @property int $position
  * @property QuestionType $type
+ * @property ProgrammingLanguage|null $programming_language
  * @property int $max_points
  * @property Carbon|null $deleted_at
  * @property Carbon|null $created_at
@@ -51,7 +53,7 @@ use Illuminate\Support\Carbon;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['text', 'position', 'type', 'max_points'])]
+#[Fillable(['text', 'position', 'type', 'programming_language', 'max_points'])]
 class Question extends Model
 {
     /** @use HasFactory<QuestionFactory> */
@@ -59,6 +61,7 @@ class Question extends Model
 
     protected $casts = [
         'type' => QuestionType::class,
+        'programming_language' => ProgrammingLanguage::class,
         'max_points' => 'integer',
     ];
 

@@ -1,5 +1,6 @@
 import http from './http'
 import type { Page, PageOptions } from './types'
+import type { ProgrammingLanguage } from './quizzes'
 
 export type AdminAttemptStatus = 'in_progress' | 'submitted' | 'completed' | 'expired'
 
@@ -36,13 +37,11 @@ export interface AdminSingleChoiceAttemptQuestion {
     answers: AdminAttemptAnswer[]
 }
 
-export interface AdminTextAttemptQuestion {
+interface AdminManualAttemptQuestion {
     uuid: string
-    type: 'text'
     text: string
     position: number
     state: 'pending_manual' | 'graded' | 'empty'
-    response: { text: string | null }
     criteria: string | null
     max_points: number
     awarded_points: number | null
@@ -50,7 +49,26 @@ export interface AdminTextAttemptQuestion {
     grading_version: number
 }
 
-export type AdminAttemptQuestion = AdminSingleChoiceAttemptQuestion | AdminTextAttemptQuestion
+export interface AdminTextAttemptQuestion extends AdminManualAttemptQuestion {
+    type: 'text'
+    response: { text?: string }
+    public_config: { max_length: number }
+}
+
+export interface AdminCodeAttemptQuestion extends AdminManualAttemptQuestion {
+    type: 'code'
+    response: { code?: string }
+    public_config: {
+        language: ProgrammingLanguage
+        label: string
+        editor_id: string
+        file_extension: string
+        max_length: number
+    }
+}
+
+export type AdminAttemptQuestion =
+    AdminSingleChoiceAttemptQuestion | AdminTextAttemptQuestion | AdminCodeAttemptQuestion
 
 export interface AdminAttemptDetail extends AdminAttemptSummary {
     questions: AdminAttemptQuestion[]

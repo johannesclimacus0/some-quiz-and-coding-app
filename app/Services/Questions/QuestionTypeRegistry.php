@@ -12,10 +12,12 @@ final class QuestionTypeRegistry
     public function __construct(
         SingleChoiceQuestionType $singleChoice,
         TextQuestionType $text,
+        CodeQuestionType $code,
     ) {
         $this->handlers = [
             $singleChoice->type()->value => $singleChoice,
             $text->type()->value => $text,
+            $code->type()->value => $code,
         ];
     }
 

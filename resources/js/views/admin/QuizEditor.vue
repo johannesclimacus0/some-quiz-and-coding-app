@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
     quizzesApi,
+    type ProgrammingLanguage,
     type Quiz,
     type QuizInput,
     type Question,
@@ -21,6 +22,8 @@ const router = useRouter()
 const quiz = ref<Quiz | null>(null)
 const activeNode = ref('quiz')
 const questionFormKey = ref(0)
+const newQuestionType = ref<Question['type']>('single_choice')
+const newQuestionLanguage = ref<ProgrammingLanguage>('cpp')
 const saved = ref(false)
 const { busy, error, errors, run } = useApiOperation()
 const errorTarget = ref('')
@@ -67,10 +70,19 @@ async function addQuestion(input: TextInput) {
     await run(async () => {
         const created = await quizzesApi.createQuestion({
             quiz: current.uuid,
-            input: { ...input, type: 'single_choice', max_points: 1 },
+            input: {
+                ...input,
+                type: newQuestionType.value,
+                ...(newQuestionType.value === 'code'
+                    ? { programming_language: newQuestionLanguage.value }
+                    : {}),
+                max_points: 1,
+            },
         })
         quiz.value = await quizzesApi.show({ uuid: current.uuid })
         questionFormKey.value++
+        newQuestionType.value = 'single_choice'
+        newQuestionLanguage.value = 'cpp'
         activeNode.value = created.uuid
     })
 }
@@ -89,7 +101,7 @@ function removeQuestion(uuid: string): void {
 }
 
 function questionState(question: Question): string {
-    if (question.type === 'text') return 'ready'
+    if (question.type !== 'single_choice') return 'ready'
     if (!question.answers?.length) return 'empty'
     return question.answers.some((answer) => answer.is_correct) ? 'ready' : 'invalid'
 }
@@ -231,7 +243,14 @@ async function removeQuiz() {
                                             "
                                         >
                                             {{ questionState(question) }} ·
-                                            {{ question.answers?.length ?? 0 }} ответов
+                                            {{
+                                                question.type === 'single_choice'
+                                                    ? `${question.answers?.length ?? 0} ответов`
+                                                    : question.type === 'code'
+                                                      ? (question.programming_language ??
+                                                        'язык не выбран')
+                                                      : 'ручная проверка'
+                                            }}
                                         </span>
                                     </span>
                                 </button>
@@ -290,6 +309,37 @@ async function removeQuiz() {
                                     следующая позиция: {{ nextQuestionPosition }}
                                 </p>
                             </div>
+                            <section
+                                class="mb-5 grid gap-3 border border-[#cec9d5] p-3 dark:border-[#363845] sm:grid-cols-2"
+                            >
+                                <label
+                                    class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                                >
+                                    <span>Тип вопроса</span>
+                                    <select
+                                        v-model="newQuestionType"
+                                        class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                                    >
+                                        <option value="single_choice">Один вариант</option>
+                                        <option value="text">Текстовый ответ</option>
+                                        <option value="code">Код</option>
+                                    </select>
+                                </label>
+                                <label
+                                    v-if="newQuestionType === 'code'"
+                                    class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                                >
+                                    <span>Язык</span>
+                                    <select
+                                        v-model="newQuestionLanguage"
+                                        class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                                    >
+                                        <option value="cpp">C++</option>
+                                        <option value="sql">SQL</option>
+                                        <option value="java">Java</option>
+                                    </select>
+                                </label>
+                            </section>
                             <TextItemForm
                                 :key="questionFormKey"
                                 id="new-question"

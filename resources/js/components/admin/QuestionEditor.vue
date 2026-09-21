@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import http from '../../api/http'
-import { quizzesApi, type Question, type QuestionInput, type TextInput } from '../../api/quizzes'
+import {
+    quizzesApi,
+    type ProgrammingLanguage,
+    type Question,
+    type QuestionInput,
+    type TextInput,
+} from '../../api/quizzes'
 import AlertMessage from '../AlertMessage.vue'
 import TextItemForm from './TextItemForm.vue'
 import { useApiOperation } from '../../composables/useApiOperation'
@@ -13,8 +19,13 @@ const errorTarget = ref('')
 const editingAnswer = ref<string | null>(null)
 const addingAnswer = ref(false)
 const answerFormKey = ref(0)
-const settings = reactive<{ type: Question['type']; max_points: number }>({
+const settings = reactive<{
+    type: Question['type']
+    programming_language: ProgrammingLanguage
+    max_points: number
+}>({
     type: props.question.type,
+    programming_language: props.question.programming_language ?? 'cpp',
     max_points: props.question.max_points,
 })
 const answers = computed(() => props.question.answers ?? [])
@@ -23,11 +34,17 @@ const nextAnswerPosition = computed(
 )
 
 watch(
-    () => props.question.uuid,
+    () => [
+        props.question.uuid,
+        props.question.type,
+        props.question.programming_language,
+        props.question.max_points,
+    ],
     () => {
         editingAnswer.value = null
         addingAnswer.value = false
         settings.type = props.question.type
+        settings.programming_language = props.question.programming_language ?? 'cpp'
         settings.max_points = props.question.max_points
     },
 )
@@ -56,14 +73,40 @@ function saveQuestion(input: QuestionInput) {
 
 async function saveType(): Promise<void> {
     const previousType = props.question.type
+    const previousLanguage = props.question.programming_language ?? 'cpp'
     const saved = await mutate('question-settings', () =>
         quizzesApi.updateQuestion({
             quiz: props.quizUuid,
             question: props.question.uuid,
-            input: { type: settings.type },
+            input:
+                settings.type === 'code'
+                    ? { type: settings.type, programming_language: settings.programming_language }
+                    : { type: settings.type },
         }),
     )
-    if (!saved) settings.type = previousType
+    if (!saved) {
+        settings.type = previousType
+        settings.programming_language = previousLanguage
+    }
+}
+
+async function saveLanguage(): Promise<void> {
+    if (
+        busy.value ||
+        settings.type !== 'code' ||
+        settings.programming_language === props.question.programming_language
+    )
+        return
+
+    const previousLanguage = props.question.programming_language ?? 'cpp'
+    const saved = await mutate('question-settings', () =>
+        quizzesApi.updateQuestion({
+            quiz: props.quizUuid,
+            question: props.question.uuid,
+            input: { programming_language: settings.programming_language },
+        }),
+    )
+    if (!saved) settings.programming_language = previousLanguage
 }
 
 async function savePoints(): Promise<void> {
@@ -164,7 +207,12 @@ function removeAnswer(uuid: string) {
                 @save="saveQuestion"
             />
             <section
-                class="grid gap-3 border border-[#cec9d5] p-3 dark:border-[#363845] sm:grid-cols-[minmax(0,1fr)_10rem]"
+                class="grid gap-3 border border-[#cec9d5] p-3 dark:border-[#363845] sm:grid-cols-2"
+                :class="
+                    settings.type === 'code'
+                        ? 'xl:grid-cols-[minmax(0,1fr)_12rem_10rem]'
+                        : 'xl:grid-cols-[minmax(0,1fr)_10rem]'
+                "
             >
                 <label class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]">
                     <span>Тип вопроса</span>
@@ -175,7 +223,29 @@ function removeAnswer(uuid: string) {
                     >
                         <option value="single_choice">Один вариант</option>
                         <option value="text">Текстовый ответ</option>
+                        <option value="code">Код</option>
                     </select>
+                </label>
+                <label
+                    v-if="settings.type === 'code'"
+                    class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                >
+                    <span>Язык</span>
+                    <select
+                        v-model="settings.programming_language"
+                        class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                        @change="saveLanguage"
+                    >
+                        <option value="cpp">C++</option>
+                        <option value="sql">SQL</option>
+                        <option value="java">Java</option>
+                    </select>
+                    <span
+                        v-if="errorTarget === 'question-settings' && errors.programming_language"
+                        class="block text-[#b24d91] dark:text-[#e781bd]"
+                    >
+                        {{ errors.programming_language[0] }}
+                    </span>
                 </label>
                 <label class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]">
                     <span>Максимальный балл</span>
@@ -198,7 +268,7 @@ function removeAnswer(uuid: string) {
                 </label>
                 <p
                     v-if="errorTarget === 'question-settings' && errors.type"
-                    class="font-mono text-xs text-[#b24d91] sm:col-span-2 dark:text-[#e781bd]"
+                    class="font-mono text-xs text-[#b24d91] sm:col-span-full dark:text-[#e781bd]"
                 >
                     {{ errors.type[0] }}
                 </p>

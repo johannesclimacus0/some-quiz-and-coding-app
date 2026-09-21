@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('text');
             $table->unsignedSmallInteger('position')->default(0);
             $table->string('type')->default('single_choice');
+            $table->string('programming_language')->nullable();
             $table->unsignedSmallInteger('max_points')->default(1);
             $table->softDeletes();
             $table->timestamps();

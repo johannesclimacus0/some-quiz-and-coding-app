@@ -123,4 +123,33 @@ class QuizApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('type');
     }
+
+    public function test_admin_can_create_code_questions_in_supported_languages(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $quiz = Quiz::factory()->create();
+        $url = '/api/admin/quizzes/' . $quiz->uuid . '/questions';
+
+        foreach (['cpp', 'sql', 'java'] as $position => $language) {
+            $this->postJson($url, [
+                'text' => "Задание на $language",
+                'position' => $position,
+                'type' => 'code',
+                'programming_language' => $language,
+                'max_points' => 5,
+            ])
+                ->assertCreated()
+                ->assertJsonPath('data.type', 'code')
+                ->assertJsonPath('data.programming_language', $language);
+        }
+
+        $this->postJson($url, ['text' => 'Без языка', 'type' => 'code'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('programming_language');
+        $this->postJson($url, [
+            'text' => 'Неизвестный язык',
+            'type' => 'code',
+            'programming_language' => 'python',
+        ])->assertUnprocessable()->assertJsonValidationErrors('programming_language');
+    }
 }

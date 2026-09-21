@@ -3,6 +3,7 @@
 namespace App\Actions\Admin\Questions;
 
 use App\Data\Admin\Questions\UpdateQuestionData;
+use App\Enums\QuestionType;
 use App\Models\Question;
 use App\Models\Quiz;
 use Illuminate\Support\Facades\DB;
@@ -27,9 +28,16 @@ final class UpdateQuestionAction
                 ]);
             }
 
-            $lockedQuestion->update($data->toArray());
+            $attributes = $data->toArray();
+            $targetType = $data->type ?? $lockedQuestion->type;
 
-            if ($lockedQuestion->wasChanged(['text', 'position', 'type', 'max_points'])) {
+            if ($targetType !== QuestionType::Code) {
+                $attributes['programming_language'] = null;
+            }
+
+            $lockedQuestion->update($attributes);
+
+            if ($lockedQuestion->wasChanged(['text', 'position', 'type', 'programming_language', 'max_points'])) {
                 $lockedQuiz->increment('content_version');
             }
 

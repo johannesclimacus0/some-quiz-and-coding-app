@@ -6,4 +6,5 @@ enum QuestionType: string
 {
     case SingleChoice = 'single_choice';
     case Text = 'text';
+    case Code = 'code';
 }

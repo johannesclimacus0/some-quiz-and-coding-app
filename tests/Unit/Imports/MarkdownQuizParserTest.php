@@ -38,7 +38,7 @@ class MarkdownQuizParserTest extends TestCase
         $this->assertSame('Linux', $quizzes[0]->title);
         $this->assertSame('Основы Linux', $quizzes[0]->description);
         $this->assertNull($quizzes[0]->dueAt);
-        $this->assertCount(3, $quizzes[0]->questions);
+        $this->assertCount(4, $quizzes[0]->questions);
         $this->assertSame(0, $quizzes[0]->questions[0]->position);
         $this->assertSame(1, $quizzes[0]->questions[1]->position);
         $this->assertSame('ls', $quizzes[0]->questions[0]->answers[0]->text);
@@ -46,6 +46,9 @@ class MarkdownQuizParserTest extends TestCase
         $this->assertFalse($quizzes[0]->questions[0]->answers[1]->isCorrect);
         $this->assertSame('text', $quizzes[0]->questions[2]->type->value);
         $this->assertSame([], $quizzes[0]->questions[2]->answers);
+        $this->assertSame('code', $quizzes[0]->questions[3]->type->value);
+        $this->assertSame('sql', $quizzes[0]->questions[3]->programmingLanguage?->value);
+        $this->assertSame(5, $quizzes[0]->questions[3]->maxPoints);
     }
 
     public function test_it_parses_multiple_quizzes_and_multiline_descriptions(): void

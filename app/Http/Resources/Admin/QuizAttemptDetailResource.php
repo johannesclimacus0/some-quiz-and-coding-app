@@ -16,14 +16,15 @@ class QuizAttemptDetailResource extends JsonResource
             'questions' => collect($this->snapshot['questions'])->map(function (array $question) use ($answers): array {
                 $attemptAnswer = $answers->get($question['uuid']);
 
-                if ($question['type'] === 'text') {
+                if (in_array($question['type'], ['text', 'code'], true)) {
                     return [
                         'uuid' => $question['uuid'],
-                        'type' => 'text',
+                        'type' => $question['type'],
                         'text' => $question['text'],
                         'position' => $question['position'],
                         'state' => $attemptAnswer?->grading_status?->value ?? 'empty',
-                        'response' => ['text' => $attemptAnswer?->response['text'] ?? null],
+                        'response' => $attemptAnswer?->response ?? [],
+                        'public_config' => $question['public_config'],
                         'criteria' => $question['grading_config']['criteria'],
                         'max_points' => $question['max_points'],
                         'awarded_points' => $attemptAnswer?->awarded_points,

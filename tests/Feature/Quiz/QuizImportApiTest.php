@@ -26,7 +26,7 @@ class QuizImportApiTest extends TestCase
         ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('data.quizzes', 1)
-            ->assertJsonPath('data.questions', 2)
+            ->assertJsonPath('data.questions', 3)
             ->assertJsonPath('data.answers', 2);
 
         $this->post('/api/admin/quizzes/import', [
@@ -37,13 +37,14 @@ class QuizImportApiTest extends TestCase
         ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('data.quizzes', 1)
-            ->assertJsonPath('data.questions', 3)
+            ->assertJsonPath('data.questions', 4)
             ->assertJsonPath('data.answers', 5);
 
         $this->assertSame(2, Quiz::query()->count());
-        $this->assertSame(5, Question::query()->count());
+        $this->assertSame(7, Question::query()->count());
         $this->assertSame(7, Answer::query()->count());
         $this->assertSame(3, Answer::query()->where('is_correct', true)->count());
+        $this->assertSame(2, Question::query()->where('type', 'code')->count());
     }
 
     public function test_import_is_atomic_when_a_later_quiz_is_invalid(): void

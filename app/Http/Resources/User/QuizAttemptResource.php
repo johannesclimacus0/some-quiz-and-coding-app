@@ -34,6 +34,7 @@ class QuizAttemptResource extends JsonResource
             ],
             'responses' => (object) $this->answers->mapWithKeys(fn ($answer): array => [$answer->question_uuid => [
                 ...$answer->response,
+                'awarded_points' => $answer->grading_status->value === 'graded' ? $answer->awarded_points : null,
                 'feedback' => $answer->grading_status->value === 'graded' ? $answer->feedback : null,
             ]])->all(),
             'result' => $this->submitted_at ? [

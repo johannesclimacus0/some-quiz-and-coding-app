@@ -9,6 +9,7 @@ import type { Page } from '../../api/types'
 import AlertMessage from '../AlertMessage.vue'
 import Pagination from '../Pagination.vue'
 import BaseButton from '../BaseButton.vue'
+import CodeEditor from '../CodeEditor.vue'
 import { useApiOperation } from '../../composables/useApiOperation'
 
 const props = defineProps<{ quizUuid: string }>()
@@ -38,7 +39,7 @@ async function open(attempt: AdminAttemptSummary): Promise<void> {
 function hydrateGrades(): void {
     if (!selected.value) return
     for (const question of selected.value.questions) {
-        if (question.type === 'text') {
+        if (question.type === 'text' || question.type === 'code') {
             gradeForms[question.uuid] = {
                 awardedPoints: question.awarded_points,
                 feedback: question.feedback ?? '',
@@ -48,7 +49,7 @@ function hydrateGrades(): void {
 }
 
 async function grade(
-    question: Extract<AdminAttemptDetail['questions'][number], { type: 'text' }>,
+    question: Extract<AdminAttemptDetail['questions'][number], { type: 'text' | 'code' }>,
 ): Promise<void> {
     if (!selected.value?.submitted_at || !canGrade(question) || gradeOperation.busy.value) return
     await gradeOperation.run(async () => {
@@ -66,7 +67,7 @@ async function grade(
 }
 
 function canGrade(
-    question: Extract<AdminAttemptDetail['questions'][number], { type: 'text' }>,
+    question: Extract<AdminAttemptDetail['questions'][number], { type: 'text' | 'code' }>,
 ): boolean {
     const points = gradeForms[question.uuid]?.awardedPoints
     return (
@@ -271,7 +272,24 @@ onMounted(() => load())
                         v-else
                         class="space-y-3 p-3 font-mono text-xs"
                     >
+                        <div
+                            v-if="question.type === 'code'"
+                            class="space-y-2"
+                        >
+                            <p class="text-[#686171] dark:text-[#9792a5]">
+                                {{ question.public_config.label }} · solution.{{
+                                    question.public_config.file_extension
+                                }}
+                            </p>
+                            <CodeEditor
+                                :model-value="question.response.code ?? ''"
+                                :language="question.public_config.editor_id"
+                                readonly
+                                height="24rem"
+                            />
+                        </div>
                         <p
+                            v-else
                             class="break-words whitespace-pre-wrap border border-[#cec9d5] bg-[#f3f1f6] p-3 leading-6 dark:border-[#363845] dark:bg-[#101219]"
                         >
                             {{ question.response.text || 'Ответ не сохранён' }}
