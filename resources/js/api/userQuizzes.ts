@@ -6,11 +6,12 @@ export interface AssignedQuiz {
     title: string
     description: string | null
     due_at: string | null
-    attempt_status: 'not_started' | 'in_progress' | 'completed' | 'expired'
+    attempt_status: 'not_started' | 'in_progress' | 'submitted' | 'completed' | 'expired'
     result: {
-        correct_answers: number
-        total_questions: number
-        percentage: number
+        earned_points: number | null
+        max_points: number
+        percentage: number | null
+        grading_status: 'pending' | 'graded'
     } | null
 }
 

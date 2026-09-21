@@ -5,6 +5,7 @@ namespace Tests\Feature\Quiz;
 use App\Models\Answer;
 use App\Models\Question;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -97,5 +98,58 @@ class QuizApiTest extends TestCase
         $this->putJson($url . '/correct-answer', ['answer_uuid' => $answer->uuid])->assertUnprocessable();
         $this->deleteJson($url)->assertNoContent();
         $this->assertSoftDeleted($previous);
+    }
+
+    public function test_admin_can_create_a_text_question_but_cannot_change_a_live_question_type(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $quiz = Quiz::factory()->create();
+        $this->actingAs($admin);
+        $url = '/api/admin/quizzes/' . $quiz->uuid . '/questions';
+
+        $questionUuid = $this->postJson($url, [
+            'text' => 'Объясните решение.',
+            'type' => 'text',
+            'max_points' => 4,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.type', 'text')
+            ->assertJsonPath('data.max_points', 4)
+            ->json('data.uuid');
+
+        QuizAttempt::factory()->for($quiz)->create();
+
+        $this->patchJson($url . '/' . $questionUuid, ['type' => 'single_choice'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('type');
+    }
+
+    public function test_admin_can_create_code_questions_in_supported_languages(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $quiz = Quiz::factory()->create();
+        $url = '/api/admin/quizzes/' . $quiz->uuid . '/questions';
+
+        foreach (['cpp', 'sql', 'java'] as $position => $language) {
+            $this->postJson($url, [
+                'text' => "Задание на $language",
+                'position' => $position,
+                'type' => 'code',
+                'programming_language' => $language,
+                'max_points' => 5,
+            ])
+                ->assertCreated()
+                ->assertJsonPath('data.type', 'code')
+                ->assertJsonPath('data.programming_language', $language);
+        }
+
+        $this->postJson($url, ['text' => 'Без языка', 'type' => 'code'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('programming_language');
+        $this->postJson($url, [
+            'text' => 'Неизвестный язык',
+            'type' => 'code',
+            'programming_language' => 'python',
+        ])->assertUnprocessable()->assertJsonValidationErrors('programming_language');
     }
 }

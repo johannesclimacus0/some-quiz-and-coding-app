@@ -34,20 +34,25 @@ class StartQuizAttemptApiTest extends TestCase
                         'quiz' => ['uuid', 'title', 'description'],
                         'questions' => [[
                             'uuid',
+                            'type',
                             'text',
                             'position',
-                            'answers' => [['uuid', 'text', 'position']],
+                            'max_points',
+                            'public_config' => [
+                                'answers' => [['uuid', 'text', 'position']],
+                            ],
                         ]],
                     ],
-                    'selected_answers',
+                    'responses',
                     'result',
                     'started_at',
                 ],
             ])
             ->assertJsonPath('data.status', 'in_progress')
             ->assertJsonCount(1, 'data.snapshot.questions')
-            ->assertJsonPath('data.selected_answers', []);
+            ->assertJsonPath('data.responses', []);
         $this->assertStringNotContainsString('correct_answer_uuid', $started->getContent());
+        $this->assertStringNotContainsString('grading_config', $started->getContent());
 
         $uuid = $started->json('data.uuid');
         $this->postJson($url . '/attempt')->assertOk()->assertJsonPath('data.uuid', $uuid);

@@ -22,27 +22,27 @@ class QuizAttemptResource extends JsonResource
                     ->map(function (array $question): array {
                         return [
                             'uuid' => $question['uuid'],
+                            'type' => $question['type'],
                             'text' => $question['text'],
                             'position' => $question['position'],
-                            'answers' => collect($question['answers'])
-                                ->map(fn (array $answer): array => [
-                                    'uuid' => $answer['uuid'],
-                                    'text' => $answer['text'],
-                                    'position' => $answer['position'],
-                                ])
-                                ->values()
-                                ->all(),
+                            'max_points' => $question['max_points'],
+                            'public_config' => $question['public_config'],
                         ];
                     })
                     ->values()
                     ->all(),
             ],
-            'selected_answers' => $this->answers->pluck('answer_uuid', 'question_uuid')->all(),
+            'responses' => (object) $this->answers->mapWithKeys(fn ($answer): array => [$answer->question_uuid => [
+                ...$answer->response,
+                'awarded_points' => $answer->grading_status->value === 'graded' ? $answer->awarded_points : null,
+                'feedback' => $answer->grading_status->value === 'graded' ? $answer->feedback : null,
+            ]])->all(),
             'result' => $this->submitted_at ? [
-                'correct_answers' => $this->correct_answers,
-                'total_questions' => $this->total_questions,
+                'earned_points' => $this->earned_points,
+                'max_points' => $this->max_points,
                 'percentage' => $this->percentage(),
-                'submitted_at' => $this->submitted_at->toISOString(),
+                'grading_status' => $this->grading_status->value,
+                'graded_at' => $this->graded_at?->toISOString(),
             ] : null,
             'started_at' => $this->started_at->toISOString(),
         ];

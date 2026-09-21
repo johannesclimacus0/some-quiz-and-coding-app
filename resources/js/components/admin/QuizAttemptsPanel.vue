@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import {
     adminQuizAttemptsApi,
     type AdminAttemptDetail,
@@ -8,6 +8,8 @@ import {
 import type { Page } from '../../api/types'
 import AlertMessage from '../AlertMessage.vue'
 import Pagination from '../Pagination.vue'
+import BaseButton from '../BaseButton.vue'
+import CodeEditor from '../CodeEditor.vue'
 import { useApiOperation } from '../../composables/useApiOperation'
 
 const props = defineProps<{ quizUuid: string }>()
@@ -15,6 +17,8 @@ const page = ref<Page<AdminAttemptSummary> | null>(null)
 const selected = ref<AdminAttemptDetail | null>(null)
 const listOperation = useApiOperation()
 const detailOperation = useApiOperation()
+const gradeOperation = useApiOperation()
+const gradeForms = reactive<Record<string, { awardedPoints: number | null; feedback: string }>>({})
 
 function load(number = 1): Promise<boolean> {
     return listOperation.run(async () => {
@@ -28,7 +32,50 @@ async function open(attempt: AdminAttemptSummary): Promise<void> {
             quiz: props.quizUuid,
             attempt: attempt.uuid,
         })
+        hydrateGrades()
     })
+}
+
+function hydrateGrades(): void {
+    if (!selected.value) return
+    for (const question of selected.value.questions) {
+        if (question.type === 'text' || question.type === 'code') {
+            gradeForms[question.uuid] = {
+                awardedPoints: question.awarded_points,
+                feedback: question.feedback ?? '',
+            }
+        }
+    }
+}
+
+async function grade(
+    question: Extract<AdminAttemptDetail['questions'][number], { type: 'text' | 'code' }>,
+): Promise<void> {
+    if (!selected.value?.submitted_at || !canGrade(question) || gradeOperation.busy.value) return
+    await gradeOperation.run(async () => {
+        selected.value = await adminQuizAttemptsApi.gradeAttemptAnswer({
+            quiz: props.quizUuid,
+            attempt: selected.value!.uuid,
+            question: question.uuid,
+            awardedPoints: Number(gradeForms[question.uuid].awardedPoints),
+            feedback: gradeForms[question.uuid].feedback || null,
+            expectedVersion: question.grading_version,
+        })
+        hydrateGrades()
+        await load(page.value?.meta.current_page)
+    })
+}
+
+function canGrade(
+    question: Extract<AdminAttemptDetail['questions'][number], { type: 'text' | 'code' }>,
+): boolean {
+    const points = gradeForms[question.uuid]?.awardedPoints
+    return (
+        typeof points === 'number' &&
+        Number.isInteger(points) &&
+        points >= 0 &&
+        points <= question.max_points
+    )
 }
 
 function formatDate(value: string | null): string {
@@ -49,22 +96,28 @@ onMounted(() => load())
 
 <template>
     <div class="space-y-4 p-4">
-        <AlertMessage :message="listOperation.error.value || detailOperation.error.value" />
-        <section class="overflow-hidden border border-[#d8d1dc] dark:border-[#343746]">
+        <AlertMessage
+            :message="
+                listOperation.error.value ||
+                detailOperation.error.value ||
+                gradeOperation.error.value
+            "
+        />
+        <section class="overflow-hidden border border-[#cec9d5] dark:border-[#363845]">
             <header
-                class="flex items-center justify-between gap-3 border-b border-[#d8d1dc] bg-[#f2eff5] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#15171e]"
+                class="flex items-center justify-between gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
             >
                 <span class="inline-flex">
                     <span class="text-[#1793d1]">attempts</span>
-                    <span class="text-[#96909e] dark:text-[#656879]">://</span>
+                    <span class="text-[#827a8b] dark:text-[#9792a5]">://</span>
                     index
                 </span>
-                <span class="text-[#96909e] dark:text-[#656879]">
+                <span class="text-[#827a8b] dark:text-[#9792a5]">
                     rows={{ page?.meta.total ?? 0 }}
                 </span>
             </header>
             <div
-                class="hidden grid-cols-[minmax(10rem,1fr)_9rem_7rem_10rem] gap-3 border-b border-[#d8d1dc] bg-[#f7f5f8] px-3 py-2 font-mono text-[0.625rem] tracking-[0.1em] text-[#96909e] dark:border-[#343746] dark:bg-[#13151c] dark:text-[#656879] md:grid"
+                class="hidden grid-cols-[minmax(10rem,1fr)_9rem_7rem_10rem] gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-[0.625rem] tracking-[0.1em] text-[#827a8b] dark:border-[#363845] dark:bg-[#101219] dark:text-[#9792a5] xl:grid"
             >
                 <span>пользователь</span>
                 <span>статус</span>
@@ -79,20 +132,20 @@ onMounted(() => load())
             </p>
             <p
                 v-else-if="page && !page.data.length"
-                class="p-6 text-center font-mono text-xs text-[#68616f] dark:text-[#918da0]"
+                class="p-6 text-center font-mono text-xs text-[#686171] dark:text-[#9792a5]"
             >
                 попыток пока нет
             </p>
-            <ul class="divide-y divide-[#e0dae4] dark:divide-[#292c36]">
+            <ul class="divide-y divide-[#dfdae5] dark:divide-[#242632]">
                 <li
                     v-for="attempt in page?.data"
                     :key="attempt.uuid"
                 >
                     <button
                         type="button"
-                        class="grid w-full gap-1 px-3 py-3 text-left transition-colors hover:bg-[#eeeaf2] dark:hover:bg-[#1b1e27] md:grid-cols-[minmax(10rem,1fr)_9rem_7rem_10rem] md:items-center md:gap-3"
+                        class="grid w-full gap-1 px-3 py-3 text-left transition-colors hover:bg-[#ede9f1] dark:hover:bg-[#191b24] xl:grid-cols-[minmax(10rem,1fr)_9rem_7rem_10rem] xl:items-center xl:gap-3"
                         :class="
-                            selected?.uuid === attempt.uuid ? 'bg-[#eeeaf2] dark:bg-[#1b1e27]' : ''
+                            selected?.uuid === attempt.uuid ? 'bg-[#ede9f1] dark:bg-[#191b24]' : ''
                         "
                         :disabled="detailOperation.busy.value"
                         @click="open(attempt)"
@@ -102,7 +155,7 @@ onMounted(() => load())
                                 {{ attempt.user.name }}
                             </span>
                             <span
-                                class="block truncate font-mono text-[0.6875rem] text-[#68616f] dark:text-[#918da0]"
+                                class="block truncate font-mono text-[0.6875rem] text-[#686171] dark:text-[#9792a5]"
                             >
                                 {{ attempt.user.email }}
                             </span>
@@ -111,7 +164,7 @@ onMounted(() => load())
                             class="font-mono text-xs"
                             :class="
                                 attempt.status === 'completed'
-                                    ? 'text-[#557789] dark:text-[#8ca8b7]'
+                                    ? 'text-[#447b9e] dark:text-[#8eb4d1]'
                                     : 'text-[#b24d91] dark:text-[#e781bd]'
                             "
                         >
@@ -120,11 +173,13 @@ onMounted(() => load())
                         <span class="font-mono text-xs">
                             {{
                                 attempt.result
-                                    ? `${attempt.result.correct_answers}/${attempt.result.total_questions} · ${attempt.result.percentage}%`
+                                    ? attempt.result.earned_points === null
+                                        ? 'ожидает проверки'
+                                        : `${attempt.result.earned_points}/${attempt.result.max_points} · ${attempt.result.percentage}%`
                                     : '--'
                             }}
                         </span>
-                        <time class="font-mono text-[0.6875rem] text-[#68616f] dark:text-[#918da0]">
+                        <time class="font-mono text-[0.6875rem] text-[#686171] dark:text-[#9792a5]">
                             {{ formatDate(attempt.started_at) }}
                         </time>
                     </button>
@@ -141,20 +196,20 @@ onMounted(() => load())
         </section>
         <p
             v-if="detailOperation.busy.value"
-            class="border border-[#d8d1dc] p-5 text-center font-mono text-xs dark:border-[#343746]"
+            class="border border-[#cec9d5] p-5 text-center font-mono text-xs dark:border-[#363845]"
         >
             чтение снимка...
         </p>
         <section
             v-if="selected && !detailOperation.busy.value"
-            class="border border-[#d8d1dc] dark:border-[#343746]"
+            class="border border-[#cec9d5] dark:border-[#363845]"
         >
             <header
-                class="flex flex-wrap items-center justify-between gap-3 border-b border-[#d8d1dc] bg-[#f2eff5] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#15171e]"
+                class="flex flex-wrap items-center justify-between gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
             >
                 <span class="inline-flex">
                     <span class="text-[#1793d1]">attempt</span>
-                    <span class="text-[#96909e] dark:text-[#656879]">://</span>
+                    <span class="text-[#827a8b] dark:text-[#9792a5]">://</span>
                     {{ selected.uuid.slice(0, 16) }}
                 </span>
                 <span>{{ selected.user.name }} · {{ selected.status }}</span>
@@ -164,10 +219,10 @@ onMounted(() => load())
                 <article
                     v-for="(question, index) in selected.questions"
                     :key="question.uuid"
-                    class="border border-[#d8d1dc] dark:border-[#343746]"
+                    class="border border-[#cec9d5] dark:border-[#363845]"
                 >
                     <header
-                        class="flex items-start justify-between gap-3 border-b border-[#d8d1dc] bg-[#f7f5f8] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#13151c]"
+                        class="flex items-start justify-between gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#101219]"
                     >
                         <span>
                             <span class="text-[#1793d1]">
@@ -178,19 +233,22 @@ onMounted(() => load())
                         <span
                             :class="
                                 question.state === 'correct'
-                                    ? 'text-[#557789] dark:text-[#8ca8b7]'
+                                    ? 'text-[#447b9e] dark:text-[#8eb4d1]'
                                     : 'text-[#b24d91] dark:text-[#e781bd]'
                             "
                         >
                             {{ question.state }}
                         </span>
                     </header>
-                    <ul class="divide-y divide-[#e0dae4] font-mono text-xs dark:divide-[#292c36]">
+                    <ul
+                        v-if="question.type === 'single_choice'"
+                        class="divide-y divide-[#dfdae5] font-mono text-xs dark:divide-[#242632]"
+                    >
                         <li
                             v-for="answer in question.answers"
                             :key="answer.uuid"
                             class="flex items-start justify-between gap-3 px-3 py-2.5"
-                            :class="answer.is_selected ? 'bg-[#eeeaf2] dark:bg-[#1b1e27]' : ''"
+                            :class="answer.is_selected ? 'bg-[#ede9f1] dark:bg-[#191b24]' : ''"
                         >
                             <span>{{ answer.text }}</span>
                             <span class="shrink-0">
@@ -203,13 +261,77 @@ onMounted(() => load())
                                 <span v-if="answer.is_selected && answer.is_correct">·</span>
                                 <span
                                     v-if="answer.is_correct"
-                                    class="text-[#557789] dark:text-[#8ca8b7]"
+                                    class="text-[#447b9e] dark:text-[#8eb4d1]"
                                 >
                                     correct
                                 </span>
                             </span>
                         </li>
                     </ul>
+                    <div
+                        v-else
+                        class="space-y-3 p-3 font-mono text-xs"
+                    >
+                        <div
+                            v-if="question.type === 'code'"
+                            class="space-y-2"
+                        >
+                            <p class="text-[#686171] dark:text-[#9792a5]">
+                                {{ question.public_config.label }} · solution.{{
+                                    question.public_config.file_extension
+                                }}
+                            </p>
+                            <CodeEditor
+                                :model-value="question.response.code ?? ''"
+                                :language="question.public_config.editor_id"
+                                readonly
+                                height="24rem"
+                            />
+                        </div>
+                        <p
+                            v-else
+                            class="break-words whitespace-pre-wrap border border-[#cec9d5] bg-[#f3f1f6] p-3 leading-6 dark:border-[#363845] dark:bg-[#101219]"
+                        >
+                            {{ question.response.text || 'Ответ не сохранён' }}
+                        </p>
+                        <p class="text-[#686171] dark:text-[#9792a5]">
+                            Критерии: {{ question.criteria || 'не заданы' }} · диапазон: 0–{{
+                                question.max_points
+                            }}
+                        </p>
+                        <div
+                            v-if="selected.submitted_at"
+                            class="grid min-w-0 gap-3 xl:grid-cols-[6rem_minmax(0,1fr)_auto]"
+                        >
+                            <label class="space-y-1">
+                                <span>Баллы</span>
+                                <input
+                                    v-model.number="gradeForms[question.uuid].awardedPoints"
+                                    type="number"
+                                    min="0"
+                                    :max="question.max_points"
+                                    class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                                />
+                            </label>
+                            <label class="space-y-1">
+                                <span>Комментарий</span>
+                                <textarea
+                                    v-model="gradeForms[question.uuid].feedback"
+                                    rows="3"
+                                    maxlength="4096"
+                                    class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                                />
+                            </label>
+                            <BaseButton
+                                class="self-end"
+                                :loading="gradeOperation.busy.value"
+                                :disabled="!canGrade(question)"
+                                @click="grade(question)"
+                            >
+                                Сохранить оценку
+                            </BaseButton>
+                        </div>
+                    </div>
                 </article>
             </div>
         </section>

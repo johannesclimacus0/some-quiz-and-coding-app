@@ -77,6 +77,21 @@ class JsonQuizParserTest extends TestCase
         }
     }
 
+    public function test_question_without_answers_becomes_text_question(): void
+    {
+        $quizzes = iterator_to_array($this->parser->parse(json_encode([
+            'quizzes' => [[
+                'title' => 'Текстовый квиз',
+                'questions' => [['text' => 'Напишите объяснение']],
+            ]],
+        ], JSON_THROW_ON_ERROR)));
+
+        $question = $quizzes[0]->questions[0];
+
+        $this->assertSame('text', $question->type->value);
+        $this->assertSame([], $question->answers);
+    }
+
     #[DataProvider('invalidDocumentProvider')]
     public function test_it_rejects_invalid_document_structures(string $contents, string $message): void
     {

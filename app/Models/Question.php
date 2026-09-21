@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Concerns\HasUuidRouteKey;
+use App\Enums\ProgrammingLanguage;
+use App\Enums\QuestionType;
 use Database\Factories\QuestionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -19,6 +21,9 @@ use Illuminate\Support\Carbon;
  * @property int $quiz_id
  * @property string $text
  * @property int $position
+ * @property QuestionType $type
+ * @property ProgrammingLanguage|null $programming_language
+ * @property int $max_points
  * @property Carbon|null $deleted_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -36,9 +41,11 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereDeletedByParent($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereMaxPoints($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question wherePosition($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereQuizId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Question withTrashed(bool $withTrashed = true)
@@ -46,11 +53,17 @@ use Illuminate\Support\Carbon;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['text', 'position'])]
+#[Fillable(['text', 'position', 'type', 'programming_language', 'max_points'])]
 class Question extends Model
 {
     /** @use HasFactory<QuestionFactory> */
     use HasFactory, HasUuidRouteKey, SoftDeletes;
+
+    protected $casts = [
+        'type' => QuestionType::class,
+        'programming_language' => ProgrammingLanguage::class,
+        'max_points' => 'integer',
+    ];
 
     protected static function booted(): void
     {

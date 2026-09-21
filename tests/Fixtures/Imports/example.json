@@ -20,6 +20,17 @@
                             "is_correct": false
                         }
                     ]
+                },
+                {
+                    "text": "Объясните, зачем нужна команда pwd",
+                    "position": 1
+                },
+                {
+                    "text": "Напишите функцию сложения двух чисел",
+                    "position": 2,
+                    "type": "code",
+                    "programming_language": "cpp",
+                    "max_points": 5
                 }
             ]
         }

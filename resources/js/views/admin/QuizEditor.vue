@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
     quizzesApi,
+    type ProgrammingLanguage,
     type Quiz,
     type QuizInput,
     type Question,
@@ -21,6 +22,8 @@ const router = useRouter()
 const quiz = ref<Quiz | null>(null)
 const activeNode = ref('quiz')
 const questionFormKey = ref(0)
+const newQuestionType = ref<Question['type']>('single_choice')
+const newQuestionLanguage = ref<ProgrammingLanguage>('cpp')
 const saved = ref(false)
 const { busy, error, errors, run } = useApiOperation()
 const errorTarget = ref('')
@@ -65,9 +68,21 @@ async function addQuestion(input: TextInput) {
     const current = quiz.value
     errorTarget.value = 'question'
     await run(async () => {
-        const created = await quizzesApi.createQuestion({ quiz: current.uuid, input })
+        const created = await quizzesApi.createQuestion({
+            quiz: current.uuid,
+            input: {
+                ...input,
+                type: newQuestionType.value,
+                ...(newQuestionType.value === 'code'
+                    ? { programming_language: newQuestionLanguage.value }
+                    : {}),
+                max_points: 1,
+            },
+        })
         quiz.value = await quizzesApi.show({ uuid: current.uuid })
         questionFormKey.value++
+        newQuestionType.value = 'single_choice'
+        newQuestionLanguage.value = 'cpp'
         activeNode.value = created.uuid
     })
 }
@@ -86,6 +101,7 @@ function removeQuestion(uuid: string): void {
 }
 
 function questionState(question: Question): string {
+    if (question.type !== 'single_choice') return 'ready'
     if (!question.answers?.length) return 'empty'
     return question.answers.some((answer) => answer.is_correct) ? 'ready' : 'invalid'
 }
@@ -106,13 +122,13 @@ async function removeQuiz() {
             <div class="flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
                 <RouterLink
                     :to="{ name: 'admin.quizzes' }"
-                    class="text-[#557789] transition-colors hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:text-[#65b7df]"
+                    class="text-[#447b9e] transition-colors hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:text-[#65b7df]"
                 >
-                    <-- список квизов
+                    &lt;-- список квизов
                 </RouterLink>
                 <span
                     v-if="quiz"
-                    class="text-[#96909e] dark:text-[#656879]"
+                    class="text-[#827a8b] dark:text-[#9792a5]"
                 >
                     id:{{ quiz.uuid.slice(0, 16) }}
                 </span>
@@ -120,20 +136,20 @@ async function removeQuiz() {
             <AlertMessage :message="error" />
             <p
                 v-if="busy && !quiz"
-                class="border border-[#c9c1cf] p-8 text-center font-mono text-xs dark:border-[#343746]"
+                class="border border-[#cec9d5] p-8 text-center font-mono text-xs dark:border-[#363845]"
             >
                 загрузка рабочей области...
             </p>
             <section
                 v-if="quiz"
-                class="overflow-hidden border border-[#c9c1cf] bg-[#fbfafd] dark:border-[#343746] dark:bg-[#11131a]"
+                class="overflow-hidden border border-[#cec9d5] bg-[#fcfafd] dark:border-[#363845] dark:bg-[#101219]"
             >
                 <header
-                    class="flex flex-wrap items-center justify-between gap-3 border-b border-[#c9c1cf] bg-[#e8e4eb] px-3 py-2 font-mono text-xs dark:border-[#343746] dark:bg-[#181b23]"
+                    class="flex flex-wrap items-center justify-between gap-3 border-b border-[#cec9d5] bg-[#f3f1f6] px-3 py-2 font-mono text-xs dark:border-[#363845] dark:bg-[#191b24]"
                 >
                     <span class="inline-flex">
                         <span class="text-[#1793d1]">editor</span>
-                        <span class="text-[#96909e] dark:text-[#656879]">://</span>
+                        <span class="text-[#827a8b] dark:text-[#9792a5]">://</span>
                         {{ quiz.title }}
                     </span>
                     <div class="flex items-center gap-4">
@@ -153,12 +169,12 @@ async function removeQuiz() {
                         </button>
                     </div>
                 </header>
-                <div class="grid min-h-[36rem] lg:grid-cols-[22rem_minmax(0,1fr)]">
+                <div class="grid min-h-[36rem] lg:grid-cols-[17rem_minmax(0,1fr)]">
                     <aside
-                        class="border-b border-[#c9c1cf] bg-[#f2eff5] dark:border-[#343746] dark:bg-[#15171e] lg:border-r lg:border-b-0"
+                        class="border-b border-[#cec9d5] bg-[#f3f1f6] dark:border-[#363845] dark:bg-[#191b24] lg:border-r lg:border-b-0"
                     >
                         <div
-                            class="border-b border-[#d8d1dc] px-3 py-2.5 font-mono text-xs font-semibold tracking-[0.1em] text-[#5f5866] dark:border-[#343746] dark:text-[#b7b2c2]"
+                            class="border-b border-[#cec9d5] px-3 py-2.5 font-mono text-xs font-semibold tracking-[0.1em] text-[#5f5866] dark:border-[#363845] dark:text-[#b7b2c2]"
                         >
                             Project tree
                         </div>
@@ -168,8 +184,8 @@ async function removeQuiz() {
                                 class="flex w-full items-center gap-2 px-2 py-2 text-left transition-colors"
                                 :class="
                                     activeNode === 'quiz'
-                                        ? 'bg-[#ddd6e1] text-[#27232d] dark:bg-[#30333e] dark:text-[#f0edf3]'
-                                        : 'text-[#68616f] hover:bg-[#e8e4eb] dark:text-[#918da0] dark:hover:bg-[#1d2029]'
+                                        ? 'bg-[#ddd6e1] text-[#2c2833] dark:bg-[#30333e] dark:text-[#f0edf3]'
+                                        : 'text-[#686171] hover:bg-[#f3f1f6] dark:text-[#9792a5] dark:hover:bg-[#242632]'
                                 "
                                 @click="activeNode = 'quiz'"
                             >
@@ -181,8 +197,8 @@ async function removeQuiz() {
                                 class="mt-1 flex w-full items-center gap-2 px-2 py-2 text-left transition-colors"
                                 :class="
                                     activeNode === 'attempts'
-                                        ? 'bg-[#ddd6e1] text-[#27232d] dark:bg-[#30333e] dark:text-[#f0edf3]'
-                                        : 'text-[#68616f] hover:bg-[#e8e4eb] dark:text-[#918da0] dark:hover:bg-[#1d2029]'
+                                        ? 'bg-[#ddd6e1] text-[#2c2833] dark:bg-[#30333e] dark:text-[#f0edf3]'
+                                        : 'text-[#686171] hover:bg-[#f3f1f6] dark:text-[#9792a5] dark:hover:bg-[#242632]'
                                 "
                                 @click="activeNode = 'attempts'"
                             >
@@ -190,7 +206,7 @@ async function removeQuiz() {
                                 <span class="truncate">Попытки/</span>
                             </button>
                             <div
-                                class="mt-2 border-t border-dashed border-[#c9c1cf] pt-2 dark:border-[#343746]"
+                                class="mt-2 border-t border-dashed border-[#cec9d5] pt-2 dark:border-[#363845]"
                             >
                                 <div
                                     class="px-2 pb-1.5 font-mono text-[0.6875rem] font-semibold tracking-[0.1em] text-[#5f5866] dark:text-[#b7b2c2]"
@@ -204,13 +220,13 @@ async function removeQuiz() {
                                     class="grid w-full grid-cols-[2.5rem_minmax(0,1fr)] items-start gap-2 px-2 py-2.5 text-left transition-colors"
                                     :class="
                                         activeNode === question.uuid
-                                            ? 'bg-[#ddd6e1] text-[#27232d] dark:bg-[#30333e] dark:text-[#f0edf3]'
-                                            : 'text-[#68616f] hover:bg-[#e8e4eb] dark:text-[#918da0] dark:hover:bg-[#1d2029]'
+                                            ? 'bg-[#ddd6e1] text-[#2c2833] dark:bg-[#30333e] dark:text-[#f0edf3]'
+                                            : 'text-[#686171] hover:bg-[#f3f1f6] dark:text-[#9792a5] dark:hover:bg-[#242632]'
                                     "
                                     @click="activeNode = question.uuid"
                                 >
                                     <span
-                                        class="pt-0.5 text-[0.6875rem] text-[#96909e] dark:text-[#656879]"
+                                        class="pt-0.5 text-[0.6875rem] text-[#827a8b] dark:text-[#9792a5]"
                                     >
                                         Q{{ String(index + 1).padStart(2, '0') }}
                                     </span>
@@ -222,19 +238,26 @@ async function removeQuiz() {
                                             class="mt-0.5 block text-[0.625rem]"
                                             :class="
                                                 questionState(question) === 'ready'
-                                                    ? 'text-[#557789] dark:text-[#8ca8b7]'
+                                                    ? 'text-[#447b9e] dark:text-[#8eb4d1]'
                                                     : 'text-[#b24d91] dark:text-[#e781bd]'
                                             "
                                         >
                                             {{ questionState(question) }} ·
-                                            {{ question.answers?.length ?? 0 }} ответов
+                                            {{
+                                                question.type === 'single_choice'
+                                                    ? `${question.answers?.length ?? 0} ответов`
+                                                    : question.type === 'code'
+                                                      ? (question.programming_language ??
+                                                        'язык не выбран')
+                                                      : 'ручная проверка'
+                                            }}
                                         </span>
                                     </span>
                                 </button>
                                 <button
                                     @click="activeNode = 'new-question'"
                                     type="button"
-                                    class="mt-1 w-full px-2 py-2 text-left text-[#557789] transition-colors hover:bg-[#e8e4eb] hover:text-[#287da8] dark:text-[#8ca8b7] dark:hover:bg-[#1d2029] dark:hover:text-[#65b7df]"
+                                    class="mt-1 w-full px-2 py-2 text-left text-[#447b9e] transition-colors hover:bg-[#f3f1f6] hover:text-[#287da8] dark:text-[#8eb4d1] dark:hover:bg-[#242632] dark:hover:text-[#65b7df]"
                                 >
                                     + новый вопрос
                                 </button>
@@ -244,7 +267,7 @@ async function removeQuiz() {
 
                     <main class="min-w-0">
                         <div
-                            class="border-b border-[#d8d1dc] bg-[#f7f5f8] px-4 py-2 font-mono text-[0.6875rem] text-[#96909e] dark:border-[#343746] dark:bg-[#13151c] dark:text-[#656879]"
+                            class="border-b border-[#cec9d5] bg-[#f3f1f6] px-4 py-2 font-mono text-[0.6875rem] text-[#827a8b] dark:border-[#363845] dark:bg-[#101219] dark:text-[#9792a5]"
                         >
                             buffer://{{
                                 activeNode === 'quiz'
@@ -265,7 +288,7 @@ async function removeQuiz() {
                             />
                             <p
                                 v-if="saved"
-                                class="px-4 pb-4 font-mono text-xs text-[#557789] dark:text-[#8ca8b7]"
+                                class="px-4 pb-4 font-mono text-xs text-[#447b9e] dark:text-[#8eb4d1]"
                             >
                                 изменения сохранены.
                             </p>
@@ -278,14 +301,45 @@ async function removeQuiz() {
                             v-else-if="activeNode === 'new-question'"
                             class="p-4"
                         >
-                            <div class="mb-5 font-mono text-xs text-[#68616f] dark:text-[#918da0]">
-                                <p class="text-sm text-[#27232d] dark:text-[#e8e5ef]">
+                            <div class="mb-5 font-mono text-xs text-[#686171] dark:text-[#9792a5]">
+                                <p class="text-sm text-[#2c2833] dark:text-[#e0dce8]">
                                     Создание вопроса
                                 </p>
                                 <p class="mt-1 text-[0.6875rem]">
                                     следующая позиция: {{ nextQuestionPosition }}
                                 </p>
                             </div>
+                            <section
+                                class="mb-5 grid gap-3 border border-[#cec9d5] p-3 dark:border-[#363845] sm:grid-cols-2"
+                            >
+                                <label
+                                    class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                                >
+                                    <span>Тип вопроса</span>
+                                    <select
+                                        v-model="newQuestionType"
+                                        class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                                    >
+                                        <option value="single_choice">Один вариант</option>
+                                        <option value="text">Текстовый ответ</option>
+                                        <option value="code">Код</option>
+                                    </select>
+                                </label>
+                                <label
+                                    v-if="newQuestionType === 'code'"
+                                    class="space-y-1 font-mono text-xs text-[#686171] dark:text-[#9792a5]"
+                                >
+                                    <span>Язык</span>
+                                    <select
+                                        v-model="newQuestionLanguage"
+                                        class="w-full border border-[#cec9d5] bg-white p-2 dark:border-[#363845] dark:bg-[#191b24]"
+                                    >
+                                        <option value="cpp">C++</option>
+                                        <option value="sql">SQL</option>
+                                        <option value="java">Java</option>
+                                    </select>
+                                </label>
+                            </section>
                             <TextItemForm
                                 :key="questionFormKey"
                                 id="new-question"

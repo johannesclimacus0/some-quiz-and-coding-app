@@ -6,13 +6,7 @@ import typescriptEslint from 'typescript-eslint'
 
 export default typescriptEslint.config(
     {
-        ignores: [
-            'node_modules',
-            'public/build',
-            'vendor',
-            'storage',
-            'bootstrap/cache',
-        ],
+        ignores: ['node_modules', 'public/build', 'vendor', 'storage', 'bootstrap/cache'],
     },
     eslint.configs.recommended,
     ...typescriptEslint.configs.recommended,

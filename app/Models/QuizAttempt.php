@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\HasUuidRouteKey;
+use App\Enums\AttemptGradingStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\QuizAttemptFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -48,7 +49,7 @@ use Illuminate\Support\Carbon;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['user_id', 'quiz_id', 'snapshot', 'started_at', 'submitted_at', 'correct_answers', 'total_questions'])]
+#[Fillable(['user_id', 'quiz_id', 'snapshot', 'started_at', 'submitted_at', 'correct_answers', 'total_questions', 'max_points', 'earned_points', 'graded_at', 'grading_status'])]
 class QuizAttempt extends Model
 {
     /** @use HasFactory<QuizAttemptFactory> */
@@ -62,6 +63,10 @@ class QuizAttempt extends Model
             'submitted_at' => 'immutable_datetime',
             'correct_answers' => 'integer',
             'total_questions' => 'integer',
+            'max_points' => 'integer',
+            'earned_points' => 'integer',
+            'graded_at' => 'immutable_datetime',
+            'grading_status' => AttemptGradingStatus::class,
         ];
     }
 
@@ -83,7 +88,7 @@ class QuizAttempt extends Model
     public function status(?Quiz $quiz = null): string
     {
         if ($this->submitted_at !== null) {
-            return 'completed';
+            return $this->grading_status === AttemptGradingStatus::Graded ? 'completed' : 'submitted';
         }
 
         return ($quiz ?? $this->quiz)->due_at?->isPast() ? 'expired' : 'in_progress';
@@ -91,10 +96,10 @@ class QuizAttempt extends Model
 
     public function percentage(): ?int
     {
-        if ($this->correct_answers === null || $this->total_questions === 0) {
+        if ($this->earned_points === null || $this->max_points === 0) {
             return null;
         }
 
-        return (int) round($this->correct_answers / $this->total_questions * 100);
+        return (int) round($this->earned_points / $this->max_points * 100);
     }
 }

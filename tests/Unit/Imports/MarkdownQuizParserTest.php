@@ -38,12 +38,17 @@ class MarkdownQuizParserTest extends TestCase
         $this->assertSame('Linux', $quizzes[0]->title);
         $this->assertSame('Основы Linux', $quizzes[0]->description);
         $this->assertNull($quizzes[0]->dueAt);
-        $this->assertCount(2, $quizzes[0]->questions);
+        $this->assertCount(4, $quizzes[0]->questions);
         $this->assertSame(0, $quizzes[0]->questions[0]->position);
         $this->assertSame(1, $quizzes[0]->questions[1]->position);
         $this->assertSame('ls', $quizzes[0]->questions[0]->answers[0]->text);
         $this->assertTrue($quizzes[0]->questions[0]->answers[0]->isCorrect);
         $this->assertFalse($quizzes[0]->questions[0]->answers[1]->isCorrect);
+        $this->assertSame('text', $quizzes[0]->questions[2]->type->value);
+        $this->assertSame([], $quizzes[0]->questions[2]->answers);
+        $this->assertSame('code', $quizzes[0]->questions[3]->type->value);
+        $this->assertSame('sql', $quizzes[0]->questions[3]->programmingLanguage?->value);
+        $this->assertSame(5, $quizzes[0]->questions[3]->maxPoints);
     }
 
     public function test_it_parses_multiple_quizzes_and_multiline_descriptions(): void
@@ -69,6 +74,19 @@ class MarkdownQuizParserTest extends TestCase
         $this->assertSame("Первая строка\nВторая строка", $quizzes[0]->description);
         $this->assertSame('Второй квиз', $quizzes[1]->title);
         $this->assertSame('2027-01-01 12:00:00', $quizzes[1]->dueAt?->format('Y-m-d H:i:s'));
+    }
+
+    public function test_question_without_answers_becomes_text_question(): void
+    {
+        $quizzes = iterator_to_array($this->parser->parse(<<<'MD'
+# Квиз
+## Напишите объяснение
+MD));
+
+        $question = $quizzes[0]->questions[0];
+
+        $this->assertSame('text', $question->type->value);
+        $this->assertSame([], $question->answers);
     }
 
     #[DataProvider('invalidSyntaxProvider')]

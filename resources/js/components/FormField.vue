@@ -24,23 +24,26 @@ const updateValue = (event: Event): void => {
 <template>
     <div class="space-y-2">
         <label
-            class="block font-mono text-xs font-medium text-[#68616f] dark:text-[#918da0]"
+            class="block font-mono text-xs font-medium text-[#686171] dark:text-[#9792a5]"
             :for="id"
         >
             {{ label }}
         </label>
         <input
             @input="updateValue"
-            class="w-full min-w-0 rounded-sm border border-[#c9c1cf] bg-[#fbfafd] px-2.5 py-2 font-mono text-xs text-[#27232d] outline-none transition-colors placeholder:text-[#96909e] focus:border-[#1793d1] focus:ring-1 focus:ring-[#1793d1]/30 dark:border-[#3b3d4d] dark:bg-[#11131a] dark:text-[#e8e5ef] dark:placeholder:text-[#656879]"
+            class="w-full min-w-0 border border-[#cec9d5] bg-[#fcfafd] px-2.5 py-2 font-mono text-xs text-[#2c2833] outline-none transition-colors placeholder:text-[#827a8b] focus:border-[#1793d1] focus:ring-1 focus:ring-[#1793d1]/30 dark:border-[#363845] dark:bg-[#101219] dark:text-[#e0dce8] dark:placeholder:text-[#9792a5]"
             :class="{ 'border-[#c14378]! dark:border-[#f077a8]!': error }"
             :id="id"
             :name="id"
             :value="modelValue"
             v-bind="$attrs"
+            :aria-invalid="Boolean(error)"
+            :aria-describedby="error ? `${id}-error` : undefined"
         />
         <p
             v-if="error"
-            class="flex items-start gap-2 font-mono text-xs font-medium leading-5 text-[#68616f] dark:text-[#918da0]"
+            :id="`${id}-error`"
+            class="flex items-start gap-2 font-mono text-xs font-medium leading-5 text-[#686171] dark:text-[#9792a5]"
         >
             <span class="shrink-0 text-[#c14378] dark:text-[#f077a8]">!</span>
             <span>{{ error }}</span>

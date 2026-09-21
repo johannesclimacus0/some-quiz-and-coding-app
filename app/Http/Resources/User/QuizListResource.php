@@ -18,9 +18,10 @@ class QuizListResource extends JsonResource
             'due_at' => $this->due_at?->toISOString(),
             'attempt_status' => $attempt?->status($this->resource) ?? 'not_started',
             'result' => $attempt?->submitted_at ? [
-                'correct_answers' => $attempt->correct_answers,
-                'total_questions' => $attempt->total_questions,
+                'earned_points' => $attempt->earned_points,
+                'max_points' => $attempt->max_points,
                 'percentage' => $attempt->percentage(),
+                'grading_status' => $attempt->grading_status->value,
             ] : null,
         ];
     }

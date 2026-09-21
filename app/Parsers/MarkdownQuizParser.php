@@ -90,6 +90,36 @@ class MarkdownQuizParser implements QuizParser
                 continue;
             }
 
+            if (preg_match('/^@type\s+(.+)$/u', $line, $matches) === 1) {
+                if ($currentQuestion === null) {
+                    throw new InvalidArgumentException("Тип в строке $lineNumber указан до вопроса");
+                }
+
+                $currentQuestion['type'] = trim($matches[1]);
+
+                continue;
+            }
+
+            if (preg_match('/^@language\s+(.+)$/u', $line, $matches) === 1) {
+                if ($currentQuestion === null) {
+                    throw new InvalidArgumentException("Язык в строке $lineNumber указан до вопроса");
+                }
+
+                $currentQuestion['programming_language'] = trim($matches[1]);
+
+                continue;
+            }
+
+            if (preg_match('/^@max_points\s+(.+)$/u', $line, $matches) === 1) {
+                if ($currentQuestion === null) {
+                    throw new InvalidArgumentException("Максимальный балл в строке $lineNumber указан до вопроса");
+                }
+
+                $currentQuestion['max_points'] = trim($matches[1]);
+
+                continue;
+            }
+
             if (preg_match('/^@due_at\s+(.+)$/u', $line, $matches) === 1) {
                 if ($currentQuiz === null) {
                     throw new InvalidArgumentException("Срок в строке $lineNumber указан до заголовка квиза");
@@ -112,7 +142,7 @@ class MarkdownQuizParser implements QuizParser
 
                 $currentQuestion['answers'][] = [
                     'text' => trim($matches[2]),
-                    'is_correct' => $matches[1] === '*',
+                    'is_correct' => $matches[1] === '-',
                 ];
 
                 continue;

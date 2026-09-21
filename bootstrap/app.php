@@ -3,6 +3,8 @@
 use App\Exceptions\QuizAttempts\AnswerNotInQuestion;
 use App\Exceptions\QuizAttempts\AttemptAlreadySubmitted;
 use App\Exceptions\QuizAttempts\AttemptIncomplete;
+use App\Exceptions\QuizAttempts\GradeVersionConflict;
+use App\Exceptions\QuizAttempts\InvalidQuestionResponse;
 use App\Exceptions\QuizAttempts\QuestionNotInAttempt;
 use App\Exceptions\QuizAttempts\QuizAttemptException;
 use App\Exceptions\QuizAttempts\QuizDeadlineExpired;
@@ -33,10 +35,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            if ($exception instanceof InvalidQuestionResponse) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'errors' => [$exception->field => [$exception->getMessage()]],
+                ], 422);
+            }
+
             [$status, $errors] = match ($exception::class) {
-                QuizDeadlineExpired::class, QuizNotReady::class, AttemptAlreadySubmitted::class => [409, null],
+                QuizDeadlineExpired::class, QuizNotReady::class, AttemptAlreadySubmitted::class, GradeVersionConflict::class => [409, null],
                 QuestionNotInAttempt::class => [422, ['question' => [$exception->getMessage()]]],
-                AnswerNotInQuestion::class => [422, ['answer_uuid' => [$exception->getMessage()]]],
+                AnswerNotInQuestion::class => [422, ['response.answer_uuid' => [$exception->getMessage()]]],
                 AttemptIncomplete::class => [422, ['answers' => [$exception->getMessage()]]],
             };
 

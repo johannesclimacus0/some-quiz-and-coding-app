@@ -20,9 +20,10 @@ class QuizAttemptSummaryResource extends JsonResource
             'started_at' => $this->started_at->toISOString(),
             'submitted_at' => $this->submitted_at?->toISOString(),
             'result' => $this->submitted_at ? [
-                'correct_answers' => $this->correct_answers,
-                'total_questions' => $this->total_questions,
+                'earned_points' => $this->earned_points,
+                'max_points' => $this->max_points,
                 'percentage' => $this->percentage(),
+                'grading_status' => $this->grading_status->value,
             ] : null,
         ];
     }

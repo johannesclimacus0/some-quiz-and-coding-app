@@ -20,6 +20,7 @@ class QuizAttemptRelationsTest extends TestCase
         $user = User::factory()->create();
         $quiz = Quiz::factory()->create();
         $questionUuid = (string) Str::uuid();
+        $answerUuid = (string) Str::uuid();
         $attempt = QuizAttempt::factory()->for($user)->for($quiz)->create([
             'snapshot' => ['quiz' => ['title' => 'Snapshot'], 'questions' => []],
             'started_at' => now(),
@@ -27,7 +28,7 @@ class QuizAttemptRelationsTest extends TestCase
         ]);
         QuizAttemptAnswer::factory()->for($attempt, 'attempt')->create([
             'question_uuid' => $questionUuid,
-            'answer_uuid' => (string) Str::uuid(),
+            'response' => ['answer_uuid' => $answerUuid],
         ]);
 
         $this->assertSame($user->id, $attempt->user->id);
@@ -35,6 +36,7 @@ class QuizAttemptRelationsTest extends TestCase
         $this->assertSame('Snapshot', $attempt->snapshot['quiz']['title']);
         $this->assertNotNull($attempt->started_at);
         $this->assertCount(1, $attempt->answers);
+        $this->assertSame(['answer_uuid' => $answerUuid], $attempt->answers->first()->response);
         $this->assertCount(1, $user->quizAttempts);
         $this->assertCount(1, $quiz->attempts);
     }
@@ -60,12 +62,12 @@ class QuizAttemptRelationsTest extends TestCase
     public function test_percentage_is_calculated_once_and_handles_an_empty_attempt(): void
     {
         $attempt = QuizAttempt::factory()->create([
-            'correct_answers' => 1,
-            'total_questions' => 3,
+            'earned_points' => 1,
+            'max_points' => 3,
         ]);
         $emptyAttempt = QuizAttempt::factory()->create([
-            'correct_answers' => 0,
-            'total_questions' => 0,
+            'earned_points' => 0,
+            'max_points' => 0,
         ]);
 
         $this->assertSame(33, $attempt->percentage());

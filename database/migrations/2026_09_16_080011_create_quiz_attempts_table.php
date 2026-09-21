@@ -21,6 +21,10 @@ return new class extends Migration
             $table->timestamp('submitted_at')->nullable();
             $table->unsignedSmallInteger('correct_answers')->nullable();
             $table->unsignedSmallInteger('total_questions');
+            $table->unsignedSmallInteger('max_points')->default(0);
+            $table->unsignedSmallInteger('earned_points')->nullable();
+            $table->timestamp('graded_at')->nullable();
+            $table->string('grading_status')->default('not_started');
             $table->timestamps();
 
             $table->unique(['user_id', 'quiz_id']);

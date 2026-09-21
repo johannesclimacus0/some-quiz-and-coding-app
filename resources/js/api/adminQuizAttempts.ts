@@ -1,12 +1,14 @@
 import http from './http'
 import type { Page, PageOptions } from './types'
+import type { ProgrammingLanguage } from './quizzes'
 
-export type AdminAttemptStatus = 'in_progress' | 'completed' | 'expired'
+export type AdminAttemptStatus = 'in_progress' | 'submitted' | 'completed' | 'expired'
 
 export interface AdminAttemptResult {
-    correct_answers: number
-    total_questions: number
-    percentage: number
+    earned_points: number | null
+    max_points: number
+    percentage: number | null
+    grading_status: 'pending' | 'graded'
 }
 
 export interface AdminAttemptSummary {
@@ -26,13 +28,47 @@ export interface AdminAttemptAnswer {
     is_selected: boolean
 }
 
-export interface AdminAttemptQuestion {
+export interface AdminSingleChoiceAttemptQuestion {
     uuid: string
+    type: 'single_choice'
     text: string
     position: number
     state: 'correct' | 'incorrect' | 'empty'
     answers: AdminAttemptAnswer[]
 }
+
+interface AdminManualAttemptQuestion {
+    uuid: string
+    text: string
+    position: number
+    state: 'pending_manual' | 'graded' | 'empty'
+    criteria: string | null
+    max_points: number
+    awarded_points: number | null
+    feedback: string | null
+    grading_version: number
+}
+
+export interface AdminTextAttemptQuestion extends AdminManualAttemptQuestion {
+    type: 'text'
+    response: { text?: string }
+    public_config: { max_length: number }
+}
+
+export interface AdminCodeAttemptQuestion extends AdminManualAttemptQuestion {
+    type: 'code'
+    response: { code?: string }
+    public_config: {
+        language: ProgrammingLanguage
+        label: string
+        editor_id: string
+        file_extension: string
+        max_length: number
+    }
+}
+
+export type AdminAttemptQuestion =
+    AdminSingleChoiceAttemptQuestion | AdminTextAttemptQuestion | AdminCodeAttemptQuestion
 
 export interface AdminAttemptDetail extends AdminAttemptSummary {
     questions: AdminAttemptQuestion[]
@@ -49,5 +85,31 @@ export const adminQuizAttemptsApi = {
     },
     async show({ quiz, attempt }: { quiz: string; attempt: string }): Promise<AdminAttemptDetail> {
         return (await http.get<{ data: AdminAttemptDetail }>(`${path(quiz)}/${attempt}`)).data.data
+    },
+    async gradeAttemptAnswer({
+        quiz,
+        attempt,
+        question,
+        awardedPoints,
+        feedback,
+        expectedVersion,
+    }: {
+        quiz: string
+        attempt: string
+        question: string
+        awardedPoints: number
+        feedback: string | null
+        expectedVersion: number
+    }): Promise<AdminAttemptDetail> {
+        return (
+            await http.put<{ data: AdminAttemptDetail }>(
+                `${path(quiz)}/${attempt}/answers/${question}/grade`,
+                {
+                    awarded_points: awardedPoints,
+                    feedback,
+                    expected_version: expectedVersion,
+                },
+            )
+        ).data.data
     },
 }

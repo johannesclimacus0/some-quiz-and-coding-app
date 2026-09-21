@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\QuizAttempt;
 
+use App\Enums\AnswerGradingStatus;
+use App\Enums\AttemptGradingStatus;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptAnswer;
@@ -27,22 +29,33 @@ class AdminQuizAttemptApiTest extends TestCase
                 'quiz' => ['uuid' => $quiz->uuid, 'title' => $quiz->title, 'description' => null],
                 'questions' => [[
                     'uuid' => $questionUuid,
+                    'type' => 'single_choice',
                     'text' => 'Question?',
                     'position' => 0,
-                    'correct_answer_uuid' => $correctUuid,
-                    'answers' => [
-                        ['uuid' => $correctUuid, 'text' => 'Correct', 'position' => 0],
-                        ['uuid' => $wrongUuid, 'text' => 'Wrong', 'position' => 1],
+                    'max_points' => 1,
+                    'grading_config' => [
+                        'correct_answer_uuid' => $correctUuid,
+                    ],
+                    'public_config' => [
+                        'answers' => [
+                            ['uuid' => $correctUuid, 'text' => 'Correct', 'position' => 0],
+                            ['uuid' => $wrongUuid, 'text' => 'Wrong', 'position' => 1],
+                        ],
                     ],
                 ]],
             ],
             'submitted_at' => now(),
             'correct_answers' => 0,
             'total_questions' => 1,
+            'max_points' => 1,
+            'earned_points' => 0,
+            'grading_status' => AttemptGradingStatus::Graded,
         ]);
         QuizAttemptAnswer::factory()->for($attempt, 'attempt')->create([
             'question_uuid' => $questionUuid,
-            'answer_uuid' => $wrongUuid,
+            'response' => ['answer_uuid' => $wrongUuid],
+            'awarded_points' => 0,
+            'grading_status' => AnswerGradingStatus::Graded,
         ]);
         $base = '/api/admin/quizzes/' . $quiz->uuid . '/attempts';
 

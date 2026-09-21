@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AnswerController;
+use App\Http\Controllers\Admin\GradeQuizAttemptAnswerController;
 use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\GroupQuizController;
 use App\Http\Controllers\Admin\GroupUserController;
@@ -43,6 +44,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum', 'admin'])->s
     Route::post('quizzes/import', QuizImportController::class)->name('quizzes.import');
     Route::get('quizzes/{quiz}/attempts', [AdminQuizAttemptController::class, 'index'])->name('quizzes.attempts.index');
     Route::get('quizzes/{quiz}/attempts/{attempt}', [AdminQuizAttemptController::class, 'show'])->name('quizzes.attempts.show');
+    Route::put('quizzes/{quiz}/attempts/{attempt}/answers/{questionUuid}/grade', GradeQuizAttemptAnswerController::class)
+        ->name('quizzes.attempts.answers.grade');
     Route::apiResource('quizzes', QuizController::class);
     Route::apiResource('quizzes.questions', QuestionController::class);
     Route::apiResource('quizzes.questions.answers', AnswerController::class);

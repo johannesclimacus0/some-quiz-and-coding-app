@@ -1,13 +1,15 @@
 {
     "quizzes": [
         {
-            "title": "Linux",
-            "description": "Основы Linux",
+            "title": "Linux и программирование",
+            "description": "Пример квиза со всеми поддерживаемыми типами вопросов и языками программирования.",
             "due_at": null,
             "questions": [
                 {
-                    "text": "Какая команда выводит список файлов?",
+                    "text": "Какая команда выводит список файлов в текущей директории?",
                     "position": 0,
+                    "type": "single_choice",
+                    "max_points": 1,
                     "answers": [
                         {
                             "text": "ls",
@@ -18,8 +20,44 @@
                             "text": "cd",
                             "position": 1,
                             "is_correct": false
+                        },
+                        {
+                            "text": "pwd",
+                            "position": 2,
+                            "is_correct": false
                         }
                     ]
+                },
+                {
+                    "text": "Объясните разницу между абсолютным и относительным путём.",
+                    "position": 1,
+                    "type": "text",
+                    "max_points": 3,
+                    "answers": []
+                },
+                {
+                    "text": "Напишите функцию sum, которая принимает два целых числа и возвращает их сумму.",
+                    "position": 2,
+                    "type": "code",
+                    "programming_language": "cpp",
+                    "max_points": 5,
+                    "answers": []
+                },
+                {
+                    "text": "Напишите запрос, который выбирает id и name активных пользователей из таблицы users и сортирует результат по name.",
+                    "position": 3,
+                    "type": "code",
+                    "programming_language": "sql",
+                    "max_points": 5,
+                    "answers": []
+                },
+                {
+                    "text": "Создайте класс Main с методом main, который выводит строку Hello, world!",
+                    "position": 4,
+                    "type": "code",
+                    "programming_language": "java",
+                    "max_points": 5,
+                    "answers": []
                 }
             ]
         }

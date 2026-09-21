@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Actions\User\Quizzes\ListUserQuizzesAction;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\User\QuizDetailsResource;
 use App\Http\Resources\User\QuizListResource;
 use App\Models\Quiz;
+use App\Queries\User\Quizzes\ListUserQuizzesQuery;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 
 class QuizController extends Controller
 {
-    public function index(Request $request, ListUserQuizzesAction $action): AnonymousResourceCollection
+    public function index(Request $request, ListUserQuizzesQuery $query): AnonymousResourceCollection
     {
-        return QuizListResource::collection($action->handle($request->user()));
+        return QuizListResource::collection($query->paginate($request->user()));
     }
 
     public function show(Request $request, Quiz $quiz): QuizDetailsResource

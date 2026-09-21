@@ -30,6 +30,10 @@ class QuizAttemptFactory extends Factory
             'submitted_at' => null,
             'correct_answers' => null,
             'total_questions' => 0,
+            'max_points' => 0,
+            'earned_points' => null,
+            'graded_at' => null,
+            'grading_status' => 'not_started',
         ];
     }
 }

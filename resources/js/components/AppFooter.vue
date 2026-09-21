@@ -29,7 +29,7 @@ const logout = async (): Promise<void> => {
 
 <template>
     <footer
-        class="border-t border-[#c9c1cf] bg-[#eeeaf2] px-4 py-1.5 dark:border-[#343746] dark:bg-[#1d2029] sm:px-6"
+        class="border-t border-[#cec9d5] bg-[#ede9f1] px-4 py-1.5 dark:border-[#363845] dark:bg-[#242632] sm:px-6"
     >
         <div
             class="mx-auto flex w-full max-w-[90rem] flex-wrap items-center justify-between gap-4 font-mono text-xs font-medium text-[#777080] dark:text-[#85899a]"

@@ -4,33 +4,30 @@ namespace App\Services\QuizAttempts;
 
 use App\Contracts\QuizSnapshotFactory;
 use App\Models\Quiz;
+use App\Services\Questions\QuestionTypeRegistry;
 
 final class QuizSnapshot implements QuizSnapshotFactory
 {
+    public function __construct(
+        private QuestionTypeRegistry $questionTypes,
+    ) {}
+
     public function make(Quiz $quiz): array
     {
         $questions = [];
 
         foreach ($quiz->questions as $question) {
-            $correctAnswerUuid = null;
-            $answers = [];
+            $config = $this->questionTypes
+                ->for($question->type)
+                ->makeSnapshot($question);
 
-            foreach ($question->answers as $answer) {
-                if ($answer->is_correct) {
-                    $correctAnswerUuid = $answer->uuid;
-                }
-                $answers[] = [
-                    'uuid' => $answer->uuid,
-                    'text' => $answer->text,
-                    'position' => $answer->position,
-                ];
-            }
             $questions[] = [
                 'uuid' => $question->uuid,
+                'type' => $question->type->value,
                 'text' => $question->text,
                 'position' => $question->position,
-                'correct_answer_uuid' => $correctAnswerUuid,
-                'answers' => $answers,
+                'max_points' => $question->max_points,
+                ...$config,
             ];
         }
 
