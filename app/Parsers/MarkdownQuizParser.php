@@ -112,7 +112,7 @@ class MarkdownQuizParser implements QuizParser
 
                 $currentQuestion['answers'][] = [
                     'text' => trim($matches[2]),
-                    'is_correct' => $matches[1] === '*',
+                    'is_correct' => $matches[1] === '-',
                 ];
 
                 continue;

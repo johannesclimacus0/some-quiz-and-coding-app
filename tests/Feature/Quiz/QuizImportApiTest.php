@@ -26,7 +26,7 @@ class QuizImportApiTest extends TestCase
         ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('data.quizzes', 1)
-            ->assertJsonPath('data.questions', 1)
+            ->assertJsonPath('data.questions', 2)
             ->assertJsonPath('data.answers', 2);
 
         $this->post('/api/admin/quizzes/import', [
@@ -37,11 +37,11 @@ class QuizImportApiTest extends TestCase
         ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('data.quizzes', 1)
-            ->assertJsonPath('data.questions', 2)
+            ->assertJsonPath('data.questions', 3)
             ->assertJsonPath('data.answers', 5);
 
         $this->assertSame(2, Quiz::query()->count());
-        $this->assertSame(3, Question::query()->count());
+        $this->assertSame(5, Question::query()->count());
         $this->assertSame(7, Answer::query()->count());
         $this->assertSame(3, Answer::query()->where('is_correct', true)->count());
     }
@@ -84,6 +84,28 @@ class QuizImportApiTest extends TestCase
         $this->assertDatabaseCount('quizzes', 0);
         $this->assertDatabaseCount('questions', 0);
         $this->assertDatabaseCount('answers', 0);
+    }
+
+    public function test_import_creates_a_text_question_when_answers_are_missing(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+
+        $this->post('/api/admin/quizzes/import', [
+            'file' => UploadedFile::fake()->createWithContent('text.json', json_encode([
+                'quizzes' => [[
+                    'title' => 'Текстовый квиз',
+                    'questions' => [['text' => 'Напишите объяснение']],
+                ]],
+            ], JSON_THROW_ON_ERROR)),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('data.questions', 1)
+            ->assertJsonPath('data.answers', 0);
+
+        $this->assertDatabaseHas('questions', [
+            'type' => 'text',
+            'text' => 'Напишите объяснение',
+        ]);
     }
 
     public function test_import_requires_admin_access_and_a_supported_file(): void

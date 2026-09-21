@@ -2,6 +2,7 @@
 
 namespace App\Services\Imports;
 
+use App\Enums\QuestionType;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,9 @@ class QuizImportValidator
             'questions.*' => 'required|array',
             'questions.*.text' => 'bail|required|string|max:4096',
             'questions.*.position' => 'bail|sometimes|integer|between:0,65535',
-            'questions.*.answers' => 'bail|required|array|min:2|max:20',
+            'questions.*.type' => ['bail', 'sometimes', Rule::enum(QuestionType::class)],
+            'questions.*.max_points' => 'bail|sometimes|integer|between:1,65535',
+            'questions.*.answers' => 'bail|sometimes|nullable|array|max:20',
             'questions.*.answers.*' => 'required|array',
             'questions.*.answers.*.text' => 'bail|required|string|max:2048',
             'questions.*.answers.*.position' => 'bail|sometimes|integer|between:0,65535',
@@ -40,7 +43,16 @@ class QuizImportValidator
 
                 $answers = $question['answers'] ?? null;
 
-                if (!is_array($answers)) {
+                if (!is_array($answers) || $answers === []) {
+                    continue;
+                }
+
+                if (count($answers) < 2) {
+                    $validator->errors()->add(
+                        'questions.' . $questionIndex . '.answers',
+                        'У вопроса должно быть минимум 2 варианта ответа'
+                    );
+
                     continue;
                 }
 
